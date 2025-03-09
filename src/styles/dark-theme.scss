@@ -1,0 +1,184 @@
+/* 暗黑主题样式 */
+
+:root {
+  --dark-bg-color: #121212;
+  --dark-secondary-bg: #1e1e1e;
+  --dark-border-color: #333333;
+  --dark-text-color: #f0f0f0;
+  --dark-secondary-text: #a0a0a0;
+  --dark-accent-color: #3d84f7;
+  --dark-hover-color: #2c2c2c;
+  --dark-message-user-bg: #2d3748;
+  --dark-message-assistant-bg: #0d2e6e;
+  --dark-code-bg: #0d1117;
+  --dark-scrollbar-thumb: #4a4a4a;
+  --dark-scrollbar-track: #2a2a2a;
+  --dark-shadow-color: rgba(0, 0, 0, 0.3);
+  --dark-gradient-start: #1a1a1a;
+  --dark-gradient-end: #121212;
+}
+
+.dark-theme {
+  /* 基础样式 */
+  background-color: var(--dark-bg-color);
+  color: var(--dark-text-color);
+  
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--dark-scrollbar-thumb);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background-color: var(--dark-scrollbar-track);
+  }
+  
+  /* 侧边栏样式 */
+  .sidebar {
+    background-color: var(--dark-secondary-bg);
+    border-right: 1px solid var(--dark-border-color);
+  }
+  
+  .chat-item {
+    color: var(--dark-text-color);
+    
+    &:hover {
+      background-color: var(--dark-hover-color);
+    }
+    
+    &.active {
+      background-color: rgba(74, 123, 255, 0.2);
+    }
+    
+    .chat-time {
+      color: var(--dark-secondary-text);
+    }
+  }
+  
+  /* 聊天区域样式 */
+  .chat-messages {
+    background-color: var(--dark-bg-color);
+  }
+  
+  .message {
+    &.user {
+      background-color: var(--dark-message-user-bg);
+      color: var(--dark-text-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    &.assistant {
+      background-color: var(--dark-message-assistant-bg);
+      color: var(--dark-text-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .message-content {
+      :deep(pre) {
+        background-color: var(--dark-code-bg);
+        color: #e2e8f0;
+      }
+      
+      :deep(code) {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+      }
+      
+      :deep(blockquote) {
+        border-left: 4px solid var(--dark-border-color);
+        color: var(--dark-secondary-text);
+      }
+    }
+  }
+  
+  .message-time {
+    color: var(--dark-secondary-text);
+  }
+  
+  /* 输入区域样式 */
+  .chat-input {
+    background-color: var(--dark-secondary-bg);
+    border-top: 1px solid var(--dark-border-color);
+  }
+  
+  /* 思考过程样式 */
+  .thinking-process {
+    background-color: var(--dark-secondary-bg) !important;
+    border-color: var(--dark-border-color);
+    
+    summary {
+      color: var(--dark-secondary-text);
+      
+      &:hover {
+        color: var(--dark-accent-color);
+      }
+    }
+  }
+  
+  /* 建议问题样式 */
+  .suggested-questions {
+    background-color: var(--dark-secondary-bg);
+    
+    .suggestions-title {
+      color: var(--dark-secondary-text);
+    }
+  }
+  
+  /* 文件列表样式 */
+  .file-list {
+    background-color: var(--dark-secondary-bg);
+    
+    .file-item {
+      background-color: var(--dark-bg-color);
+    }
+  }
+  
+  /* 音频播放器样式 */
+  .audio-player {
+    background-color: var(--dark-secondary-bg);
+    
+    .progress-bar {
+      background-color: var(--dark-border-color);
+    }
+    
+    .time-display {
+      color: var(--dark-secondary-text);
+    }
+  }
+  
+  /* Element Plus 组件样式覆盖 */
+  .el-button {
+    &--primary {
+      background-color: var(--dark-accent-color);
+      border-color: var(--dark-accent-color);
+    }
+  }
+  
+  .el-input__wrapper {
+    background-color: var(--dark-bg-color);
+    box-shadow: 0 0 0 1px var(--dark-border-color) inset;
+  }
+  
+  .el-textarea__inner {
+    background-color: var(--dark-bg-color);
+    border-color: var(--dark-border-color);
+    color: var(--dark-text-color);
+  }
+  
+  .el-dialog {
+    background-color: var(--dark-secondary-bg);
+    
+    &__title {
+      color: var(--dark-text-color);
+    }
+    
+    &__body {
+      color: var(--dark-text-color);
+    }
+  }
+}

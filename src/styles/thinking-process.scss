@@ -1,0 +1,23 @@
+.thinking-process {
+  margin-bottom: 1rem;
+  cursor: pointer;
+  
+  summary {
+    font-weight: 500;
+    color: #4b5563;
+    
+    &:hover {
+      color: #2563eb;
+    }
+  }
+  
+  &[open] {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+}
+
+.answer {
+  margin-top: 1rem;
+  line-height: 1.6;
+} 
