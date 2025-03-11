@@ -24,33 +24,20 @@
         </div>
 
         <!-- 历史对话列表 -->
-        <div class="chat-history">
-          <div v-for="chat in conversations" 
-               :key="chat.id" 
-               :class="['chat-item', { active: currentConversation?.id === chat.id }]"
-               @click="selectChat(chat)">
-            <el-tooltip :content="chat.title" placement="right">
-              <span class="chat-title">
-                <el-icon><ChatRound /></el-icon>
-                {{ chat.name || '新对话' }}
-                <span class="chat-time">{{ formatDate(chat.updated_at) }}</span>
-              </span>
-            </el-tooltip>
-            <el-button 
-              type="danger" 
-              link
-              :icon="Delete"
-              @click.stop="deleteConversation(chat.id)"
-            />
-          </div>
-        </div>
+        <ChatHistory 
+          :current-conversation-id="currentConversation?.id" 
+          :user-info="userInfo"
+          :conversations="conversations"
+          @select-chat="handleSelectChat" 
+          @delete-conversation="deleteConversation"
+        />
 
         <!-- 知识库管理 -->
-        <div class="knowledge-base">
-          <el-button @click="showKnowledgeModal = true" :icon="FolderAdd">
-            知识库管理
-          </el-button>
-        </div>
+        <KnowledgeBase 
+          :user-info="userInfo"
+          @create-knowledge-base="handleCreateKnowledgeBase"
+          @file-change="handleFileChange"
+        />
 
         <!-- 退出登录 -->
         <div class="logout">
@@ -82,9 +69,20 @@
           <!-- AI响应 -->
           <div v-else class="ai-message">
             <!-- 思考过程 -->
-            <div v-if="message.thinking" v-html="message.thinking"></div>
+            <div v-if="message.thinking" class="thinking-process">
+              <el-collapse>
+                <el-collapse-item>
+                  <template #title>
+                    <el-icon><Loading /></el-icon>
+                    AI 思考过程
+                  </template>
+                  <div class="thinking-content" v-html="formatMarkdown(message.thinking)"></div>
+                </el-collapse-item>
+              </el-collapse>
+            </div>
             
-            <div class="message-content" v-html="message.content"></div>
+            <!-- AI 回答 -->
+            <div class="message-content" v-html="formatMarkdown(message.content)"></div>
             
             <!-- 音频播放器 -->
             <AudioPlayer 
@@ -137,7 +135,7 @@
           type="textarea"
           :rows="3"
           placeholder="输入消息..."
-          @keyup.enter.ctrl="sendMessage"
+          @keyup.enter="sendMessage"
         />
         <div class="input-actions">
           <!-- 文件上传按钮 -->
@@ -183,59 +181,45 @@
       </div>
     </el-main>
 
-    <!-- 知识库管理弹窗 -->
-    <el-dialog
-      v-model="showKnowledgeModal"
-      title="知识库管理"
-      width="50%"
-    >
-      <div class="knowledge-list">
-        <div v-for="kb in knowledgeBases" 
-             :key="kb.id" 
-             class="knowledge-item">
-          <span>{{ kb.name }}</span>
-          <el-upload
-            :auto-upload="false"
-            :on-change="(file) => handleFileChange(file, kb.id)"
-          >
-            <el-button type="primary" :icon="Upload">Upload</el-button>
-          </el-upload>
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="createKnowledgeBase" :icon="Plus">
-          创建知识库
-        </el-button>
-      </template>
-    </el-dialog>
+
   </el-container>
 </template>
 
 <script setup>
 import { ref, onMounted, nextTick, inject } from 'vue'
+import { useRouter } from 'vue-router'
 import { 
   Plus, Delete, Upload, ChatRound, FolderAdd,
   CopyDocument, Headset, Microphone, Document, Close,
-  Moon, Sunny, UserFilled
+  Moon, Sunny, UserFilled, Loading
 } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 import 'element-plus/dist/index.css'
 import '../styles/thinking-process.scss'
 import { chatAPI } from '@/api/index'
+import { authAPI } from '@/api/auth'
 import AudioPlayer from '@/components/AudioPlayer.vue'
 import VoiceRecorder from '@/components/VoiceRecorder.vue'
+import ChatHistory from '@/components/ChatHistory.vue'
+import KnowledgeBase from '@/components/KnowledgeBase.vue'
 
+const router = useRouter()
+
+// 初始化 markdown-it
 const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return hljs.highlight(str, { language: lang }).value
+        return hljs.highlight(str, { language: lang }).value;
       } catch (__) {}
     }
-    return ''
+    return ''; // 使用默认的转义
   }
 })
 
@@ -248,7 +232,7 @@ const knowledgeBases = ref([])
 const showKnowledgeModal = ref(false)
 const isLoading = ref(false)
 const messagesContainer = ref(null)
-const user = ref('abc-123') // 这里应该是登录用户的ID
+// 用户ID将从userInfo中获取
 const suggestedQuestions = ref([])
 const isRecording = ref(false)
 const isDarkMode = inject('isDarkMode')
@@ -270,42 +254,9 @@ const generateId = () => {
   return Math.random().toString(36).substr(2, 9)
 }
 
-const renderMessage = (content) => {
-  if (!content) return '';
-  
-  // 检查是否是思考过程消息
-  if (typeof content === 'object' && content.event === 'agent_thought') {
-    return `
-      <details style="color:gray;background-color: ${isDarkMode.value ? '#2a2a2a' : '#f8f8f8'};padding: 8px;border-radius: 4px;" open>
-        <summary>Thinking...</summary>
-        ${md.render(content.thought || '')}
-        ${content.observation ? `<p><strong>观察：</strong>${md.render(content.observation)}</p>` : ''}
-        ${content.tool ? `<p><strong>工具：</strong>${content.tool}</p>` : ''}
-      </details>
-    `
-  }
-  
-  // 检查是否是消息内容
-  if (typeof content === 'object' && content.event === 'agent_message') {
-    return `<div class="answer">${md.render(content.answer || '')}</div>`
-  }
-  
-  // 如果是普通文本 - 处理思考过程和正式回答的分离
-  if (typeof content === 'string') {
-    // 检查是否包含思考过程（<details>标签）
-    if (content.includes('<details') && content.includes('</details>')) {
-      // 提取思考过程和正式回答
-      const detailsEndIndex = content.lastIndexOf('</details>') + 10;
-      const thinkingProcess = content.substring(0, detailsEndIndex);
-      const formalAnswer = content.substring(detailsEndIndex);
-      
-      // 返回格式化后的内容
-      return `${thinkingProcess}\n${md.render(formalAnswer)}`;
-    }
-    return md.render(content);
-  }
-  
-  return ''
+const formatMarkdown = (text) => {
+  if (!text) return '';
+  return md.render(text);
 }
 
 const scrollToBottom = async () => {
@@ -320,25 +271,83 @@ const createNewChat = () => {
   messages.value = []
 }
 
-const selectChat = async (chat) => {
+const handleSelectChat = async (chat) => {
   currentConversation.value = chat
-  messages.value = [] // 清空当前消息
+  await getMessages(chat.id)
+}
+
+const getMessages = async (conversationId) => {
+  if (!conversationId) return
+  
   try {
-    const response = await chatAPI.getMessages({
-      user: user.value,
-      conversation_id: chat.id
+    const res = await chatAPI.getMessages({
+      user: userInfo.value.userName,
+      conversationId: conversationId
     })
-    // 转换消息格式
-    messages.value = response.data.data.map(msg => ({
-      id: msg.id,
-      role: msg.answer ? 'assistant' : 'user',
-      content: msg.answer || msg.query,
-      created_at: msg.created_at
-    }))
-    scrollToBottom()
+    
+    if (res.data) {
+      // 将每条记录拆分成用户提问和 AI 回复两条消息
+      messages.value = res.data.flatMap(msg => {
+        const messageArray = []
+        
+        // 添加用户提问
+        if (msg.query) {
+          messageArray.push({
+            id: msg.id + '_user',
+            content: msg.query,
+            role: 'user',
+            created_at: msg.created_at,
+            files: msg.message_files || []
+          })
+        }
+        
+        // 处理 AI 回复
+        let thinking = ''
+        let answer = ''
+        
+        if (msg.agent_thoughts && msg.agent_thoughts.length > 0) {
+          // 第一个 thought 通常是思考过程
+          thinking = msg.agent_thoughts[0].thought
+          
+          // 最后一个 thought 通常是最终答案
+          const lastThought = msg.agent_thoughts[msg.agent_thoughts.length - 1]
+          if (lastThought.tool_input && lastThought.tool_input.includes('Final Answer')) {
+            try {
+              const toolInput = JSON.parse(lastThought.tool_input)
+              answer = toolInput['Final Answer']
+            } catch (e) {
+              answer = lastThought.thought
+            }
+          } else {
+            answer = lastThought.thought
+          }
+        }
+        
+        // 如果没有从 agent_thoughts 中获取到答案，则使用 answer 字段
+        if (!answer && msg.answer) {
+          answer = msg.answer
+        }
+        
+        // 添加 AI 回复
+        if (thinking || answer) {
+          messageArray.push({
+            id: msg.id + '_assistant',
+            content: answer,
+            role: 'assistant',
+            created_at: msg.created_at,
+            thinking: thinking,
+            files: msg.message_files || []
+          })
+        }
+        
+        return messageArray
+      })
+      
+      scrollToBottom()
+    }
   } catch (error) {
-    console.error('加载对话记录失败:', error)
-    ElMessage.error('加载对话记录失败')
+    console.error('获取会话消息失败:', error)
+    ElMessage.error('获取会话消息失败')
   }
 }
 
@@ -351,7 +360,7 @@ const deleteConversation = async (conversationId) => {
     })
     
     const res = await chatAPI.deleteConversation({
-      user: userInfo.value?.userName || 'guest',
+      user: userInfo.value.userName,
       conversationId: conversationId
     })
     
@@ -360,7 +369,6 @@ const deleteConversation = async (conversationId) => {
       if (currentConversation.value?.id === conversationId) {
         createNewChat()
       }
-      getConversations()
     }
   } catch (error) {
     if (error !== 'cancel') {
@@ -370,20 +378,34 @@ const deleteConversation = async (conversationId) => {
   }
 }
 
+// 解码 Unicode 字符串
+const decodeUnicode = (str) => {
+  try {
+    return decodeURIComponent(JSON.parse('"' + str.replace(/\"/g, '\\"') + '"'))
+  } catch (e) {
+    console.warn('Unicode 解码失败:', e)
+    return str
+  }
+}
+
+// 获取会话列表
 const getConversations = async () => {
   try {
-    const response = await chatAPI.getConversations({
-      user: userInfo.value?.userName || 'guest',
-      limit: 20
+    const res = await chatAPI.getConversations({
+      user: userInfo.value.userName
     })
-    if (response.code === 200) {
-      conversations.value = response.data || []
-      
-      if (conversations.value.length > 0 && !currentConversation.value) {
-        const latestChat = conversations.value[0]
-        currentConversation.value = latestChat
-        getMessages(latestChat.id)
-      }
+    
+    console.log('会话列表响应:', res)
+    
+    if (res && Array.isArray(res.data)) {
+      conversations.value = res.data.map(conv => ({
+        id: conv.id,
+        name: conv.name || '新对话',
+        introduction: decodeUnicode(conv.introduction || ''),
+        status: conv.status,
+        created_at: conv.created_at,
+        updated_at: conv.updated_at
+      }))
     }
   } catch (error) {
     console.error('获取会话列表失败:', error)
@@ -391,88 +413,101 @@ const getConversations = async () => {
   }
 }
 
-const getMessages = async (conversationId) => {
-  if (!conversationId) return
-  
-  try {
-    const response = await chatAPI.getMessages({
-      user: userInfo.value?.userName || 'guest',
-      conversationId: conversationId
-    })
-    if (response.code === 200) {
-      messages.value = response.data || []
-      scrollToBottom()
-    }
-  } catch (error) {
-    console.error('获取会话消息失败:', error)
-    ElMessage.error('获取会话消息失败')
-  }
-}
-
 const sendMessage = async () => {
-  if (!inputMessage.value.trim() && uploadedFiles.value.length === 0) return
-  
-  isLoading.value = true
-  currentMessageId.value = generateId()
-  
+  if (!inputMessage.value.trim()) return;
+
+  // 发送的用户消息
+  const messageId = generateId();
   const newMessage = {
-    id: currentMessageId.value,
+    id: messageId,
     content: inputMessage.value,
     role: 'user',
-    files: uploadedFiles.value.length > 0 ? uploadedFiles.value : undefined,
-    created_at: new Date().toISOString()
-  }
-  messages.value.push(newMessage)
+  };
+  messages.value.push(newMessage);
 
+  // 发送的 AI 消息（内容会被流式更新）
   const aiMessage = {
     id: generateId(),
     content: '',
     role: 'assistant',
-    thinking: '',
-    created_at: new Date().toISOString()
-  }
-  messages.value.push(aiMessage)
-  
-  // 清空输入框和上传文件列表
-  const currentInput = inputMessage.value
-  inputMessage.value = ''
-  const currentFiles = [...uploadedFiles.value]
-  uploadedFiles.value = []
-  
-  // 滚动到底部
-  await scrollToBottom()
-  
+    thinking: ''  // 用于存储思考过程
+  };
+  messages.value.push(aiMessage);
+  scrollToBottom();
+
   try {
-    // 发送消息到后端
-    const res = await chatAPI.sendMessage({
-      user: userInfo.value?.userName || 'guest',
-      query: currentInput,
-      responseMode: 'streaming',
-      conversationId: currentConversation.value?.id || ''
-    })
-    
-    if (res.code === 200) {
-      // 更新AI回复
-      const lastMessage = messages.value[messages.value.length - 1]
-      if (lastMessage && lastMessage.role === 'assistant') {
-        lastMessage.content = res.data.answer || ''
-        if (res.data.conversation_id && !currentConversation.value) {
-          currentConversation.value = { id: res.data.conversation_id }
-          getConversations()
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const response = await fetch('dev-api/deepSeek/sendMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: inputMessage.value,
+        conversationId: currentConversation.value?.id || '',
+        user: userInfo.value.userName,
+        responseMode: 'streaming'
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // 处理每一行数据
+      let newlineIndex;
+      while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, newlineIndex);
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (line.trim() && line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(5));
+            
+            // 处理不同类型的事件
+            if (data.event === 'agent_thought') {
+              // 更新思考过程
+              aiMessage.thinking = data.thought || '';
+            } else if (data.event === 'agent_message') {
+              // 追加回答内容
+              aiMessage.content += data.answer || '';
+            } else if (data.event === 'message_end') {
+              // 消息结束，可以处理元数据
+              console.log('Message completed:', data.metadata);
+            }
+            
+            scrollToBottom();
+          } catch (e) {
+            console.error('解析响应数据失败:', e);
+          }
         }
       }
     }
+
+    inputMessage.value = '';
+    await getConversations();
   } catch (error) {
-    console.error('发送消息失败:', error)
-    ElMessage.error('发送消息失败')
-    // 移除AI消息
-    messages.value = messages.value.filter(msg => msg.id !== aiMessage.id)
-  } finally {
-    isLoading.value = false
-    currentMessageId.value = null
-    scrollToBottom()
+    if (error.name === 'AbortError') {
+      console.error('请求超时');
+      ElMessage.error('请求超时，请重试');
+    } else {
+      console.error('发送消息失败:', error);
+      ElMessage.error('发送消息失败');
+    }
+    messages.value = messages.value.filter((msg) => msg.id !== aiMessage.id);
   }
-}
+};
 
 // 停止响应
 const stopResponse = () => {
@@ -502,44 +537,55 @@ const handleFileUpload = (file) => {
   })
 }
 
-// 创建知识库
-const createKnowledgeBase = async () => {
+// 处理知识库创建
+const handleCreateKnowledgeBase = async (name) => {
   try {
-    const name = await ElMessageBox.prompt('请输入知识库名称', '创建知识库', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    const res = await chatAPI.dataset.create({
+      name: name,
+      description: '',
+      indexing_technique: 'economy',
+      permission: 'all_team_members'
     })
     
-    if (name.value) {
-      const res = await chatAPI.dataset.create({
-        name: name.value,
-        description: '',
-        indexing_technique: 'economy',
-        permission: 'all_team_members'
-      })
-      
-      if (res.code === 200) {
-        ElMessage.success('创建成功')
-        getKnowledgeBases()
-      }
+    if (res.code === 200) {
+      ElMessage.success('创建成功')
+      getKnowledgeBases()
     }
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('创建知识库失败:', error)
-      ElMessage.error('创建知识库失败')
-    }
+    console.error('创建知识库失败:', error)
+    ElMessage.error('创建知识库失败')
   }
 }
 
 // 获取知识库列表
-const getKnowledgeBases = async () => {
+const getKnowledgeBases = async (page = 1, limit = 10) => {
   try {
-    const res = await chatAPI.dataset.list()
+    const res = await chatAPI.dataset.list({ page, limit })
     if (res.code === 200) {
-      knowledgeBases.value = res.data || []
+      // 处理新的响应数据结构
+      if (res.data && Array.isArray(res.data.data)) {
+        knowledgeBases.value = res.data.data.map(kb => ({
+          id: kb.id,
+          name: kb.name,
+          description: kb.description,
+          status: kb.status,
+          created_at: kb.created_at
+        }))
+      } else if (Array.isArray(res.data)) {
+        knowledgeBases.value = res.data.map(kb => ({
+          id: kb.id,
+          name: kb.name,
+          description: kb.description || '',
+          status: kb.status,
+          created_at: kb.created_at
+        }))
+      } else {
+        knowledgeBases.value = []
+      }
     }
   } catch (error) {
     console.error('获取知识库列表失败:', error)
+    ElMessage.error('获取知识库列表失败')
   }
 }
 
@@ -585,6 +631,40 @@ const formatTime = (timestamp) => {
   return date.toLocaleTimeString()
 }
 
+// 获取用户信息
+const getUserInfo = async () => {
+  try {
+    // 从localStorage获取用户信息
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      userInfo.value = JSON.parse(userInfoStr)
+    } else {
+      // 如果localStorage中没有，则从API获取
+      const res = await authAPI.getInfo()
+      if (res.code === 200 && res.user) {
+        userInfo.value = res.user // 直接使用 res.user
+        localStorage.setItem('userInfo', JSON.stringify(res.user))
+      }
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    ElMessage.error('获取用户信息失败')
+  }
+}
+
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await authAPI.logout()
+    localStorage.removeItem('token')
+    localStorage.removeItem('userInfo')
+    router.push('/login')
+  } catch (error) {
+    console.error('退出登录失败:', error)
+    ElMessage.error('退出登录失败')
+  }
+}
+
 // 组件挂载时执行
 onMounted(async () => {
   // 获取用户信息
@@ -595,6 +675,10 @@ onMounted(async () => {
   
   // 获取知识库列表
   await getKnowledgeBases()
+  
+  // 默认新对话状态
+  currentConversation.value = null
+  messages.value = []
 })
 </script>
 
@@ -859,5 +943,78 @@ onMounted(async () => {
       border-color: #475569;
     }
   }
+}
+
+.thinking-process {
+  margin: 8px 0;
+}
+
+.thinking-process :deep(.el-collapse) {
+  border: none;
+}
+
+.thinking-process :deep(.el-collapse-item__header) {
+  background-color: #f8f8f8;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thinking-process :deep(.el-collapse-item__content) {
+  padding: 12px;
+  background-color: #fafafa;
+  border-radius: 0 0 4px 4px;
+}
+
+.thinking-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #666;
+}
+
+.dark-theme {
+  .thinking-process :deep(.el-collapse-item__header) {
+    background-color: #2a2a2a;
+    color: #999;
+  }
+  
+  .thinking-process :deep(.el-collapse-item__content) {
+    background-color: #1a1a1a;
+  }
+  
+  .thinking-content {
+    color: #999;
+  }
+}
+
+.message-content {
+  margin-top: 8px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.dark-theme .message-content {
+  color: #e0e0e0;
+}
+
+/* 添加代码高亮样式 */
+.message-content pre {
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  overflow: auto;
+}
+
+.message-content code {
+  font-family: Monaco, Consolas, "Courier New", monospace;
+}
+
+.dark-theme .message-content pre {
+  background-color: #1e1e1e;
 }
 </style>

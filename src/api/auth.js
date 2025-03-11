@@ -26,14 +26,18 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    // RuoYi-vue后端返回的状态码为200表示成功
-    if (res.code === 200) {
-      return res
-    } else {
-      // 处理错误情况
-      console.error('接口返回错误:', res.msg || '未知错误')
-      return Promise.reject(new Error(res.msg || '未知错误'))
+    // 检查响应是否包含code字段
+    if (res && typeof res === 'object') {
+      // 如果没有code字段或code等于200，视为成功
+      if (!('code' in res) || res.code === 200) {
+        return res
+      } else {
+        // 处理错误情况
+        console.error('接口返回错误:', res.msg || '未知错误')
+        return Promise.reject(new Error(res.msg || '未知错误'))
+      }
     }
+    return res
   },
   error => {
     console.error('响应错误:', error)

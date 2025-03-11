@@ -7,6 +7,10 @@ const api = service
 export const chatAPI = {
   // 发送对话消息
   sendMessage: (data) => {
+    // 检查并删除query末尾的换行符
+    if (data.query && data.query.endsWith('\n')) {
+      data.query = data.query.slice(0, -1);
+    }
     return api.post('/deepSeek/sendMessage', data)
   },
 
@@ -32,16 +36,16 @@ export const chatAPI = {
 
   // 知识库相关API
   dataset: {
-    // 新建空知识库
+    // 获取知识库列表
+    list: (params = { page: 1, limit: 10 }) => {
+      return api.get('/dataset/list', { params })
+    },
+    
+    // 创建知识库
     create: (data) => {
       return api.post('/dataset/create', data)
     },
-
-    // 获取知识库列表
-    list: (params) => {
-      return api.get('/dataset/list', { params })
-    },
-
+    
     // 删除知识库
     delete: (datasetId) => {
       return api.delete(`/dataset/delete/${datasetId}`)

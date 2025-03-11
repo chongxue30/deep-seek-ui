@@ -1,13 +1,14 @@
 import axios from 'axios'
-
-const BASE_URL = 'http://49.232.61.161/v1'
+axios.defaults.timeout = 30000;  // 全局设置 30 秒超时
+const BASE_URL = '/api'  // 所有请求都通过代理指向本地服务器
 const API_KEY = 'Bearer app-Vr06unpxuIl56BHJ6U0eFTc8'
 
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Authorization': API_KEY
-  }
+  },
+  timeout: 30000
 })
 
 export const chatAPI = {
@@ -18,6 +19,9 @@ export const chatAPI = {
 
   // 发送对话消息并处理流式响应
   sendMessage: async (data) => {
+    // 检查并删除query末尾的换行符
+    const query = data.query.endsWith('\n') ? data.query.slice(0, -1) : data.query;
+    
     const response = await fetch(`${BASE_URL}/chat-messages`, {
       method: 'POST',
       headers: {
@@ -25,15 +29,14 @@ export const chatAPI = {
         'Authorization': API_KEY
       },
       body: JSON.stringify({
-        query: data.query,
-        conversation_id: data.conversation_id,
+        query: query,
+        conversationId: data.conversationId,
         user: data.user,
-        response_mode: 'streaming',
+        responseMode: 'streaming',
         files: data.files || [],
         inputs: data.inputs || {}
       })
     })
-
     return response
   },
 
