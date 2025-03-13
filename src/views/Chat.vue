@@ -205,6 +205,7 @@ import AudioPlayer from '@/components/AudioPlayer.vue'
 import VoiceRecorder from '@/components/VoiceRecorder.vue'
 import ChatHistory from '@/components/ChatHistory.vue'
 import KnowledgeBase from '@/components/KnowledgeBase.vue'
+import { reactive } from 'vue'
 
 const router = useRouter()
 
@@ -260,9 +261,11 @@ const formatMarkdown = (text) => {
 }
 
 const scrollToBottom = async () => {
+  console.log('Before scroll:', messagesContainer.value.scrollTop, messagesContainer.value.scrollHeight);
   await nextTick()
   if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    console.log('After scroll:', messagesContainer.value.scrollTop);
   }
 }
 
@@ -416,98 +419,153 @@ const getConversations = async () => {
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return;
 
-  // 发送的用户消息
+  // 添加用户消息
   const messageId = generateId();
-  const newMessage = {
+  const userMessage = {
     id: messageId,
     content: inputMessage.value,
     role: 'user',
+    created_at: new Date(),
+    files: uploadedFiles.value.map(file => ({
+      id: file.id,
+      name: file.name
+    }))
   };
-  messages.value.push(newMessage);
+  messages.value.push(userMessage);
 
-  // 发送的 AI 消息（内容会被流式更新）
+  // 添加AI回复占位符(用于流式更新)
+  const aiMessageId = generateId();
+  currentMessageId.value = aiMessageId;
+  
   const aiMessage = {
-    id: generateId(),
+    id: aiMessageId,
     content: '',
     role: 'assistant',
-    thinking: ''  // 用于存储思考过程
+    thinking: '',
+    created_at: new Date()
   };
   messages.value.push(aiMessage);
+  
+  // 清空输入并滚动到底部
+  const currentInput = inputMessage.value;
+  inputMessage.value = '';
   scrollToBottom();
-
+  isLoading.value = true;
+  
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-    const response = await fetch('dev-api/deepSeek/sendMessage', {
+    // 创建POST请求
+    const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: inputMessage.value,
+        query: currentInput,
         conversationId: currentConversation.value?.id || '',
         user: userInfo.value.userName,
-        responseMode: 'streaming'
-      }),
-      signal: controller.signal
+        responseMode: "streaming"
+      })
     });
-
-    clearTimeout(timeoutId);
-
+    
+    if (!response.ok) {
+      console.error('请求失败:', response.status);
+      ElMessage.error('请求失败');
+      return;
+    }
+    
+    if (!response.body) {
+      console.error('响应体为空');
+      return;
+    }
+    
+    console.log('开始处理流式响应...');
     const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8');
     let buffer = '';
-
+    
+    // 处理流式响应
     while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // 处理每一行数据
-      let newlineIndex;
-      while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
-        const line = buffer.slice(0, newlineIndex);
-        buffer = buffer.slice(newlineIndex + 1);
-
-        if (line.trim() && line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(5));
-            
-            // 处理不同类型的事件
-            if (data.event === 'agent_thought') {
-              // 更新思考过程
-              aiMessage.thinking = data.thought || '';
-            } else if (data.event === 'agent_message') {
-              // 追加回答内容
-              aiMessage.content += data.answer || '';
-            } else if (data.event === 'message_end') {
-              // 消息结束，可以处理元数据
-              console.log('Message completed:', data.metadata);
+      const { done, value } = await reader.read();
+      
+      if (done) {
+        console.log('数据流读取完毕');
+        break;
+      }
+      
+      // 解码收到的数据块
+      const chunk = decoder.decode(value, { stream: true });
+      console.log('收到数据块:', chunk);
+      buffer += chunk;
+      
+      // 处理完整的SSE事件
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop() || ''; // 保留可能不完整的最后一部分
+      
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        
+        // 解析事件类型和数据
+        const eventMatch = line.match(/event:\s*(\w+)/);
+        const dataMatch = line.match(/data:\s*(.*)/);
+        
+        if (!dataMatch) continue;
+        
+        const eventType = eventMatch ? eventMatch[1] : 'message';
+        let data = dataMatch[1].trim();
+        
+        console.log(`解析到事件: ${eventType}, 数据: ${data}`);
+        
+        try {
+          // 解析JSON数据
+          const parsedData = JSON.parse(data);
+          
+          // 根据事件类型更新UI
+          if (eventType === 'agent_thought' && parsedData.thought) {
+            // 更新思考过程
+            const index = messages.value.findIndex(msg => msg.id === aiMessageId);
+            if (index !== -1) {
+              messages.value[index].thinking = parsedData.thought;
+              await scrollToBottom();
             }
-            
-            scrollToBottom();
-          } catch (e) {
-            console.error('解析响应数据失败:', e);
+          } else if (eventType === 'agent_message' && parsedData.answer) {
+            // 更新回复内容
+            const index = messages.value.findIndex(msg => msg.id === aiMessageId);
+            if (index !== -1) {
+              messages.value[index].content += parsedData.answer;
+              await scrollToBottom();
+            }
+          } else if (eventType === 'message' && parsedData.answer) {
+            // 处理普通消息
+            const index = messages.value.findIndex(msg => msg.id === aiMessageId);
+            if (index !== -1) {
+              messages.value[index].content += parsedData.answer;
+              await scrollToBottom();
+            }
           }
+        } catch (e) {
+          console.error('解析数据失败:', e, data);
         }
       }
     }
-
-    inputMessage.value = '';
-    await getConversations();
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.error('请求超时');
-      ElMessage.error('请求超时，请重试');
-    } else {
-      console.error('发送消息失败:', error);
-      ElMessage.error('发送消息失败');
+    
+    isLoading.value = false;
+    currentMessageId.value = null;
+    
+    // 如果是新会话,保存会话
+    if (!currentConversation.value) {
+      getConversations();
     }
-    messages.value = messages.value.filter((msg) => msg.id !== aiMessage.id);
+  } catch (error) {
+    console.error('发送消息失败:', error);
+    ElMessage.error('发送消息失败');
+    isLoading.value = false;
+    currentMessageId.value = null;
+    
+    // 如果请求失败,移除AI消息
+    messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
   }
 };
+
+
+
 
 // 停止响应
 const stopResponse = () => {
