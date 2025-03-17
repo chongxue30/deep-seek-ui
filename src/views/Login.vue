@@ -2,11 +2,11 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <img src="../assets/logo.png" alt="Logo" class="logo" />
-        <h1>Welcome to AI Assistant</h1>
-        <p>Sign in to continue</p>
+        <img src="../../public/favicon.png" alt="Logo" class="logo" />
+        <h1>Welcome to IMUT Chat</h1>
+        <p>登录后继续</p>
       </div>
-      
+
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="form-group">
           <input
@@ -16,7 +16,7 @@
             class="input-field"
           />
         </div>
-        
+
         <div class="form-group">
           <input
             type="password"
@@ -25,7 +25,7 @@
             class="input-field"
           />
         </div>
-        
+
         <div class="form-group captcha-group">
           <input
             type="text"
@@ -38,9 +38,9 @@
             <div v-else class="captcha-loading">加载中...</div>
           </div>
         </div>
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           class="login-button"
           :class="{ loading }"
           :disabled="loading"
@@ -93,7 +93,7 @@ const handleLogin = async () => {
     ElMessage.warning('请填写完整的登录信息')
     return
   }
-  
+
   loading.value = true
   try {
     // 调用RuoYi-vue后端登录接口
@@ -148,20 +148,20 @@ onMounted(() => {
 .login-header {
   text-align: center;
   margin-bottom: 32px;
-  
+
   .logo {
     width: 64px;
     height: 64px;
     margin-bottom: 24px;
   }
-  
+
   h1 {
     color: #f8fafc;
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 8px;
   }
-  
+
   p {
     color: #94a3b8;
     font-size: 16px;
@@ -172,16 +172,16 @@ onMounted(() => {
   .form-group {
     margin-bottom: 20px;
   }
-  
+
   .captcha-group {
     display: flex;
     align-items: center;
     gap: 10px;
-    
+
     .captcha-input {
       flex: 1;
     }
-    
+
     .captcha-img {
       width: 120px;
       height: 40px;
@@ -192,20 +192,20 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      
+
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
-      
+
       .captcha-loading {
         color: #94a3b8;
         font-size: 14px;
       }
     }
   }
-  
+
   .input-field {
     width: 100%;
     padding: 12px 16px;
@@ -215,13 +215,13 @@ onMounted(() => {
     color: #f8fafc;
     font-size: 16px;
     transition: all 0.3s;
-    
+
     &:focus {
       outline: none;
       border-color: #60a5fa;
       box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
     }
-    
+
     &::placeholder {
       color: #64748b;
     }
@@ -239,16 +239,16 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
-  
+
   &:hover {
     background: #2563eb;
   }
-  
+
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
   }
-  
+
   &.loading {
     background: #2563eb;
   }
