@@ -13,7 +13,7 @@
             <div class="nickname">{{ userInfo ? userInfo.nickName || userInfo.userName : '用户' }}</div>
           </div>
         </div>
-        
+
         <div class="new-chat">
           <el-button type="primary" @click="createNewChat" :icon="Plus">
             新对话
@@ -24,16 +24,16 @@
         </div>
 
         <!-- 历史对话列表 -->
-        <ChatHistory 
-          :current-conversation-id="currentConversation?.id" 
+        <ChatHistory
+          :current-conversation-id="currentConversation?.id"
           :user-info="userInfo"
           :conversations="conversations"
-          @select-chat="handleSelectChat" 
+          @select-chat="handleSelectChat"
           @delete-conversation="deleteConversation"
         />
 
         <!-- 知识库管理 -->
-        <KnowledgeBase 
+        <KnowledgeBase
           :user-info="userInfo"
           @create-knowledge-base="handleCreateKnowledgeBase"
           @file-change="handleFileChange"
@@ -51,8 +51,8 @@
     <!-- 主聊天区域 -->
     <el-main>
       <div class="chat-messages" ref="messagesContainer">
-        <div v-for="message in messages" 
-             :key="message.id" 
+        <div v-for="message in messages"
+             :key="message.id"
              :class="['message', message.role]">
           <!-- 用户消息 -->
           <div v-if="message.role === 'user'" class="user-message">
@@ -65,7 +65,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- AI响应 -->
           <div v-else class="ai-message">
             <!-- 思考过程 -->
@@ -80,12 +80,12 @@
                 </el-collapse-item>
               </el-collapse>
             </div>
-            
+
             <!-- AI 回答 -->
             <div class="message-content" v-html="formatMarkdown(message.content)"></div>
-            
+
             <!-- 音频播放器 -->
-            <AudioPlayer 
+            <AudioPlayer
               v-if="message.audioData"
               :audio-data="message.audioData"
             />
@@ -93,9 +93,9 @@
             <!-- 消息操作 -->
             <div class="message-actions">
               <el-button-group>
-                <el-button 
-                  v-if="message.id === currentMessageId && isLoading" 
-                  type="danger" 
+                <el-button
+                  v-if="message.id === currentMessageId && isLoading"
+                  type="danger"
                   size="small"
                   @click="stopResponse"
                 >
@@ -117,8 +117,8 @@
         <div class="suggested-questions" v-if="suggestedQuestions.length">
           <p class="suggestions-title">你可能想问:</p>
           <div class="suggestions-list">
-            <el-button 
-              v-for="question in suggestedQuestions" 
+            <el-button
+              v-for="question in suggestedQuestions"
               :key="question"
               size="small"
               @click="handleSuggestedQuestion(question)"
@@ -149,30 +149,30 @@
               上传文件
             </el-button>
           </el-upload>
-          
+
           <!-- 语音输入按钮 -->
-          <el-button 
-            :icon="Microphone" 
+          <el-button
+            :icon="Microphone"
             :class="{ 'recording-btn': isRecording }"
             @click="toggleRecording"
           >
             {{ isRecording ? '结束录音' : '语音输入' }}
           </el-button>
-          
+
           <!-- 已上传文件列表 -->
           <div v-if="uploadedFiles.length > 0" class="uploaded-files">
             <div class="file-count">已上传 {{ uploadedFiles.length }} 个文件</div>
             <el-button size="small" type="danger" @click="uploadedFiles = []">清空</el-button>
           </div>
-          
+
           <el-button type="primary" @click="sendMessage" :loading="isLoading">
             发送
           </el-button>
-          
+
           <!-- 停止生成按钮 -->
-          <el-button 
-            v-if="currentTaskId" 
-            type="warning" 
+          <el-button
+            v-if="currentTaskId"
+            type="warning"
             @click="stopGeneration"
           >
             停止生成
@@ -188,7 +188,7 @@
 <script setup>
 import { ref, onMounted, nextTick, inject } from 'vue'
 import { useRouter } from 'vue-router'
-import { 
+import {
   Plus, Delete, Upload, ChatRound, FolderAdd,
   CopyDocument, Headset, Microphone, Document, Close,
   Moon, Sunny, UserFilled, Loading
@@ -281,18 +281,18 @@ const handleSelectChat = async (chat) => {
 
 const getMessages = async (conversationId) => {
   if (!conversationId) return
-  
+
   try {
     const res = await chatAPI.getMessages({
       user: userInfo.value.userName,
       conversationId: conversationId
     })
-    
+
     if (res.data) {
       // 将每条记录拆分成用户提问和 AI 回复两条消息
       messages.value = res.data.flatMap(msg => {
         const messageArray = []
-        
+
         // 添加用户提问
         if (msg.query) {
           messageArray.push({
@@ -303,15 +303,15 @@ const getMessages = async (conversationId) => {
             files: msg.message_files || []
           })
         }
-        
+
         // 处理 AI 回复
         let thinking = ''
         let answer = ''
-        
+
         if (msg.agent_thoughts && msg.agent_thoughts.length > 0) {
           // 第一个 thought 通常是思考过程
           thinking = msg.agent_thoughts[0].thought
-          
+
           // 最后一个 thought 通常是最终答案
           const lastThought = msg.agent_thoughts[msg.agent_thoughts.length - 1]
           if (lastThought.tool_input && lastThought.tool_input.includes('Final Answer')) {
@@ -325,12 +325,12 @@ const getMessages = async (conversationId) => {
             answer = lastThought.thought
           }
         }
-        
+
         // 如果没有从 agent_thoughts 中获取到答案，则使用 answer 字段
         if (!answer && msg.answer) {
           answer = msg.answer
         }
-        
+
         // 添加 AI 回复
         if (thinking || answer) {
           messageArray.push({
@@ -342,10 +342,10 @@ const getMessages = async (conversationId) => {
             files: msg.message_files || []
           })
         }
-        
+
         return messageArray
       })
-      
+
       scrollToBottom()
     }
   } catch (error) {
@@ -361,12 +361,12 @@ const deleteConversation = async (conversationId) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
+
     const res = await chatAPI.deleteConversation({
       user: userInfo.value.userName,
       conversationId: conversationId
     })
-    
+
     if (res.code === 200) {
       ElMessage.success('删除成功')
       if (currentConversation.value?.id === conversationId) {
@@ -397,9 +397,9 @@ const getConversations = async () => {
     const res = await chatAPI.getConversations({
       user: userInfo.value.userName
     })
-    
+
     console.log('会话列表响应:', res)
-    
+
     if (res && Array.isArray(res.data)) {
       conversations.value = res.data.map(conv => ({
         id: conv.id,
@@ -418,6 +418,7 @@ const getConversations = async () => {
 
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return;
+  inputMessage.value = inputMessage.value.replace(/\n+$/, '');
 
   // 添加用户消息
   const messageId = generateId();
@@ -436,7 +437,7 @@ const sendMessage = async () => {
   // 添加AI回复占位符(用于流式更新)
   const aiMessageId = generateId();
   currentMessageId.value = aiMessageId;
-  
+
   const aiMessage = {
     id: aiMessageId,
     content: '',
@@ -445,13 +446,13 @@ const sendMessage = async () => {
     created_at: new Date()
   };
   messages.value.push(aiMessage);
-  
+
   // 清空输入并滚动到底部
   const currentInput = inputMessage.value;
   inputMessage.value = '';
   scrollToBottom();
   isLoading.value = true;
-  
+
   try {
     // 创建POST请求
     const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
@@ -464,59 +465,59 @@ const sendMessage = async () => {
         responseMode: "streaming"
       })
     });
-    
+
     if (!response.ok) {
       console.error('请求失败:', response.status);
       ElMessage.error('请求失败');
       return;
     }
-    
+
     if (!response.body) {
       console.error('响应体为空');
       return;
     }
-    
+
     console.log('开始处理流式响应...');
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
-    
+
     // 处理流式响应
     while (true) {
       const { done, value } = await reader.read();
-      
+
       if (done) {
         console.log('数据流读取完毕');
         break;
       }
-      
+
       // 解码收到的数据块
       const chunk = decoder.decode(value, { stream: true });
       console.log('收到数据块:', chunk);
       buffer += chunk;
-      
+
       // 处理完整的SSE事件
       const lines = buffer.split('\n\n');
       buffer = lines.pop() || ''; // 保留可能不完整的最后一部分
-      
+
       for (const line of lines) {
         if (!line.trim()) continue;
-        
+
         // 解析事件类型和数据
         const eventMatch = line.match(/event:\s*(\w+)/);
         const dataMatch = line.match(/data:\s*(.*)/);
-        
+
         if (!dataMatch) continue;
-        
+
         const eventType = eventMatch ? eventMatch[1] : 'message';
         let data = dataMatch[1].trim();
-        
+
         console.log(`解析到事件: ${eventType}, 数据: ${data}`);
-        
+
         try {
           // 解析JSON数据
           const parsedData = JSON.parse(data);
-          
+
           // 根据事件类型更新UI
           if (eventType === 'agent_thought' && parsedData.thought) {
             // 更新思考过程
@@ -545,10 +546,10 @@ const sendMessage = async () => {
         }
       }
     }
-    
+
     isLoading.value = false;
     currentMessageId.value = null;
-    
+
     // 如果是新会话,保存会话
     if (!currentConversation.value) {
       getConversations();
@@ -558,7 +559,7 @@ const sendMessage = async () => {
     ElMessage.error('发送消息失败');
     isLoading.value = false;
     currentMessageId.value = null;
-    
+
     // 如果请求失败,移除AI消息
     messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
   }
@@ -604,7 +605,7 @@ const handleCreateKnowledgeBase = async (name) => {
       indexing_technique: 'economy',
       permission: 'all_team_members'
     })
-    
+
     if (res.code === 200) {
       ElMessage.success('创建成功')
       getKnowledgeBases()
@@ -653,7 +654,7 @@ const handleFileChange = async (file, datasetId) => {
     const formData = new FormData()
     formData.append('file', file.raw)
     formData.append('datasetId', datasetId)
-    
+
     // 上传文件到知识库
     // 这里需要实现文件上传到知识库的逻辑
     ElMessage.success('文件上传成功')
@@ -727,13 +728,13 @@ const handleLogout = async () => {
 onMounted(async () => {
   // 获取用户信息
   await getUserInfo()
-  
+
   // 获取会话列表
   await getConversations()
-  
+
   // 获取知识库列表
   await getKnowledgeBases()
-  
+
   // 默认新对话状态
   currentConversation.value = null
   messages.value = []
@@ -752,13 +753,13 @@ onMounted(async () => {
   flex-direction: column;
   background-color: #1e293b;
   color: #f8fafc;
-  
+
   .user-info {
     display: flex;
     align-items: center;
     padding: 16px;
     border-bottom: 1px solid #334155;
-    
+
     .avatar {
       width: 40px;
       height: 40px;
@@ -769,14 +770,14 @@ onMounted(async () => {
       justify-content: center;
       margin-right: 12px;
       overflow: hidden;
-      
+
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
     }
-    
+
     .user-details {
       .nickname {
         font-weight: 500;
@@ -784,19 +785,19 @@ onMounted(async () => {
       }
     }
   }
-  
+
   .new-chat {
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .chat-history {
     flex: 1;
     overflow-y: auto;
     padding: 8px;
-    
+
     .chat-item {
       padding: 10px;
       border-radius: 6px;
@@ -805,15 +806,15 @@ onMounted(async () => {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      
+
       &:hover {
         background: #334155;
       }
-      
+
       &.active {
         background: #3b82f6;
       }
-      
+
       .chat-title {
         display: flex;
         align-items: center;
@@ -822,7 +823,7 @@ onMounted(async () => {
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 180px;
-        
+
         .chat-time {
           font-size: 12px;
           opacity: 0.7;
@@ -830,7 +831,7 @@ onMounted(async () => {
       }
     }
   }
-  
+
   .knowledge-base, .logout {
     padding: 16px;
     border-top: 1px solid #334155;
@@ -848,15 +849,15 @@ onMounted(async () => {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  
+
   .message {
     margin-bottom: 24px;
     position: relative;
-    
+
     &.user {
       display: flex;
       justify-content: flex-end;
-      
+
       .user-message {
         background: #3b82f6;
         color: white;
@@ -866,7 +867,7 @@ onMounted(async () => {
         word-break: break-word;
       }
     }
-    
+
     &.assistant {
       .ai-message {
         background: #f1f5f9;
@@ -874,11 +875,11 @@ onMounted(async () => {
         padding: 12px 16px;
         max-width: 80%;
         word-break: break-word;
-        
+
         .message-content {
           margin-top: 8px;
         }
-        
+
         .message-actions {
           margin-top: 8px;
           display: flex;
@@ -886,16 +887,16 @@ onMounted(async () => {
         }
       }
     }
-    
+
     .message-time {
       font-size: 12px;
       color: #94a3b8;
       margin-top: 4px;
     }
-    
+
     .file-list {
       margin-top: 8px;
-      
+
       .file-item {
         display: flex;
         align-items: center;
@@ -904,16 +905,16 @@ onMounted(async () => {
       }
     }
   }
-  
+
   .suggested-questions {
     margin-top: 16px;
-    
+
     .suggestions-title {
       font-size: 14px;
       color: #64748b;
       margin-bottom: 8px;
     }
-    
+
     .suggestions-list {
       display: flex;
       flex-wrap: wrap;
@@ -925,19 +926,19 @@ onMounted(async () => {
 .chat-input {
   padding: 16px;
   border-top: 1px solid #e2e8f0;
-  
+
   .input-actions {
     display: flex;
     align-items: center;
     margin-top: 12px;
     gap: 8px;
-    
+
     .uploaded-files {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-left: auto;
-      
+
       .file-count {
         font-size: 14px;
         color: #64748b;
@@ -964,19 +965,19 @@ onMounted(async () => {
   .sidebar {
     background-color: #0f172a;
     color: #f8fafc;
-    
+
     .chat-item {
       &:hover {
         background: #1e293b;
       }
     }
   }
-  
+
   .el-main {
     background-color: #1e293b;
     color: #f8fafc;
   }
-  
+
   .chat-messages {
     .message {
       &.assistant {
@@ -985,16 +986,16 @@ onMounted(async () => {
           color: #f8fafc;
         }
       }
-      
+
       .message-time {
         color: #94a3b8;
       }
     }
   }
-  
+
   .chat-input {
     border-top-color: #334155;
-    
+
     .el-textarea__inner {
       background-color: #334155;
       color: #f8fafc;
@@ -1040,11 +1041,11 @@ onMounted(async () => {
     background-color: #2a2a2a;
     color: #999;
   }
-  
+
   .thinking-process :deep(.el-collapse-item__content) {
     background-color: #1a1a1a;
   }
-  
+
   .thinking-content {
     color: #999;
   }
