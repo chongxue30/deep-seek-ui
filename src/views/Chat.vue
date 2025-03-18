@@ -1,7 +1,7 @@
 <template>
   <div class="chat-container" :class="{ 'dark': isDarkMode }">
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" :class="{ 'slide-in': true }">
       <!-- User profile -->
       <div class="user-profile">
         <div class="avatar">
@@ -28,7 +28,7 @@
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path></svg>
             </div>
           </div>
-          <span>{{ isDarkMode ? '明亮模式' : '黑暗模式' }}</span>
+          <span>{{ isDarkMode ? '黑暗模式' : '明亮模式' }}</span>
         </button>
       </div>
 
@@ -41,23 +41,21 @@
             :conversations="conversations"
             @select-chat="handleSelectChat"
             @delete-conversation="deleteConversation"
+            @rename-conversation="renameConversation"
         />
       </div>
 
-      <!-- Knowledge base section -->
-      <div class="sidebar-section">
-        <h3 class="section-title">知识库</h3>
+      <!-- Knowledge base section - moved to bottom -->
+      <div class="sidebar-footer">
         <KnowledgeBase
             :user-info="userInfo"
             @create-knowledge-base="handleCreateKnowledgeBase"
             @file-change="handleFileChange"
             @show-knowledge-modal="openKnowledgeModal"
         />
-      </div>
 
-      <!-- Logout -->
-      <div class="sidebar-footer">
-        <button class="action-button danger" @click="handleLogout">
+        <!-- Logout -->
+        <button class="action-button danger logout-btn" @click="handleLogout">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           <span>退出登录</span>
         </button>
@@ -65,7 +63,7 @@
     </aside>
 
     <!-- Main chat area -->
-    <main class="chat-main">
+    <main class="chat-main" :class="{ 'fade-in': true }">
       <!-- Messages -->
       <div class="messages-container" ref="messagesContainer">
         <transition-group name="message-fade">
@@ -354,8 +352,6 @@
                 class="hidden-input"
                 @change="onFileSelected"
             />
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24"
-            />
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-upload-cloud"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m16 16-4-4-4 4"></path></svg>
             <p>点击或拖拽文件到此处上传</p>
             <p class="upload-hint">支持 .txt, .pdf, .doc, .docx 等格式</p>
@@ -552,6 +548,34 @@
       </div>
     </div>
 
+    <!-- 登出确认弹窗 -->
+    <div v-if="showLogoutConfirm" class="modal-backdrop" @click="cancelLogout"></div>
+    <div v-if="showLogoutConfirm" class="modal-container logout-modal">
+      <div class="modal-header">
+        <h3>确认退出</h3>
+        <button class="close-button" @click="cancelLogout">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="logout-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <p>确定要退出登录吗？</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-button" @click="cancelLogout">取消</button>
+        <button
+            class="action-button danger"
+            @click="confirmLogout"
+        >
+          确认退出
+        </button>
+      </div>
+    </div>
+
     <!-- 通知提示 -->
     <div v-if="notification.show" :class="['notification', notification.type]">
       <div class="notification-icon">
@@ -577,7 +601,7 @@ import { ref, onMounted, nextTick, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
-import 'highlight.js/styles/github.css'
+import 'highlight.js/styles/github-dark.css' // 使用深色主题的代码高亮
 import ChatHistory from './ChatHistory.vue'
 import KnowledgeBase from '@/components/KnowledgeBase.vue'
 import { chatAPI } from '@/api/index'
@@ -640,7 +664,7 @@ const inputMessage = ref('')
 const isLoading = ref(false)
 const messagesContainer = ref(null)
 const suggestedQuestions = ref([])
-const isRecording = ref(false)
+// const isRecording = ref(false)
 const isDarkMode = inject('isDarkMode', ref(false))
 const toggleDarkMode = inject('toggleDarkMode', () => {})
 const currentMessageId = ref(null)
@@ -650,6 +674,7 @@ const inputField = ref(null)
 const fileInput = ref(null)
 const isSpeaking = ref(false)
 const copySuccess = ref(false)
+const showLogoutConfirm = ref(false)
 
 // 分页相关状态
 const currentPage = ref(1)
@@ -814,8 +839,8 @@ const deleteConversation = async (conversationId) => {
     }
 
     const res = await chatAPI.deleteConversation({
-      user: userInfo.value.userName,
-      conversationId: conversationId
+      conversationId:conversationId,
+      user:userInfo.value.userName
     })
 
     if (res.code === 200) {
@@ -838,9 +863,41 @@ const deleteConversation = async (conversationId) => {
           }
         }
       }
+
+      // 重新获取会话列表
+      await getConversations();
     }
   } catch (error) {
     console.error('Failed to delete conversation:', error)
+  }
+}
+
+// 重命名会话
+const renameConversation = async (conversationId, newName) => {
+  try {
+    const res = await chatAPI.renameConversation( {
+      user: userInfo.value.userName,
+      conversationId: conversationId,
+      newName: newName
+    });
+
+    if (res.code === 200) {
+      // 更新本地会话列表
+      const index = conversations.value.findIndex(c => c.id === conversationId);
+      if (index !== -1) {
+        conversations.value[index].name = newName;
+
+        // 如果是当前会话，也更新当前会话
+        if (currentConversation.value?.id === conversationId) {
+          currentConversation.value.name = newName;
+        }
+      }
+      showNotification('会话重命名成功', 'success');
+      await getConversations();
+    }
+  } catch (error) {
+    console.error('Failed to rename conversation:', error);
+    showNotification('会话重命名失败', 'error');
   }
 }
 
@@ -850,7 +907,7 @@ const getDocuments = async (datasetId) => {
     isLoadingDocs.value = true;
     const token = localStorage.getItem('token');
     // 使用URL查询参数而不是请求体
-    const res = await fetch(`http://localhost:8080/document/list?page=${currentPage.value}&limit=${pageSize.value}`, {
+    const res = await fetch(`/dev-api/document/list?page=${currentPage.value}&limit=${pageSize.value}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -977,7 +1034,7 @@ const sendMessage = async () => {
   try {
     const token = localStorage.getItem('token');
     // Create POST request - using original API path
-    const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
+    const response = await fetch('http://10.131.149.41:8080/deepSeek/sendMessage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' ,
         'Authorization': `Bearer ${token}`},
@@ -988,7 +1045,13 @@ const sendMessage = async () => {
         responseMode: "streaming"
       })
     });
-
+    // const response = await chatAPI.sendMessage({
+    //   query: currentInput,
+    //   conversationId: currentConversation.value?.id || '',
+    //   user: userInfo.value.userName,
+    //   responseMode: "streaming"
+    // });
+    console.log(response)
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status}`);
     }
@@ -1346,7 +1409,7 @@ const submitAddDocument = async () => {
     } else {
       // 手动输入文本创建文档
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8080/document/create', {
+      const res = await fetch('http://10.131.149.41:8080/document/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' ,
           'Authorization': `Bearer ${token}`},
@@ -1394,7 +1457,7 @@ const viewDocument = async (doc) => {
       setTimeout(() => {
         currentDocument.value = {
           ...doc,
-          text: '这是文档的内容，实际应该从API获取。'
+          text: '您暂无权限查看知识库文档内容！'
         };
         isLoadingDocContent.value = false;
       }, 1000);
@@ -1441,9 +1504,9 @@ const confirmDelete = async () => {
     if (deleteType.value === 'kb') {
       const token = localStorage.getItem('token');
       // 删除知识库
-      const res = await fetch(`http://localhost:8080/dataset/delete/${itemToDelete.value.id}`, {
-        method: 'DELETE'
-        , headers: { 'Content-Type': 'application/json' ,
+      const res = await fetch(`http://10.131.149.41:8080/dataset/delete/${itemToDelete.value.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`}
       });
 
@@ -1456,9 +1519,9 @@ const confirmDelete = async () => {
     } else {
       // 删除文档
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8080/document/delete', {
+      const res = await fetch('http://10.131.149.41:8080/document/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' ,
+        headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`},
         body: JSON.stringify({
           datasetId: currentKnowledgeBase.value.id,
@@ -1542,14 +1605,31 @@ const getUserInfo = async () => {
   }
 }
 
-const handleLogout = async () => {
+// 处理登出
+const handleLogout = () => {
+  showLogoutConfirm.value = true;
+}
+
+// 取消登出
+const cancelLogout = () => {
+  showLogoutConfirm.value = false;
+}
+
+// 确认登出
+const confirmLogout = async () => {
   try {
     await authAPI.logout();
     localStorage.removeItem('token');
     localStorage.removeItem('userInfo');
-    router.push('/login');
+    showNotification('已成功退出登录', 'success');
+    setTimeout(() => {
+      router.push('/login');
+    }, 1000);
   } catch (error) {
     console.error('Failed to logout:', error);
+    showNotification('退出登录失败', 'error');
+  } finally {
+    showLogoutConfirm.value = false;
   }
 }
 
@@ -1608,6 +1688,12 @@ onMounted(async () => {
   overflow: hidden;
 }
 
+/* Dark mode styles */
+.dark {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
 /* Sidebar */
 .sidebar {
   width: 280px;
@@ -1624,6 +1710,12 @@ onMounted(async () => {
   z-index: 10;
 }
 
+.dark .sidebar {
+  background-color: #1f2937;
+  border-right-color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .sidebar.slide-in {
   transform: translateX(0);
   opacity: 1;
@@ -1635,6 +1727,11 @@ onMounted(async () => {
   padding: 1.25rem;
   border-bottom: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+}
+
+.dark .user-profile {
+  border-bottom-color: #374151;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
 }
 
 .avatar {
@@ -1678,6 +1775,10 @@ onMounted(async () => {
   font-size: 0.9375rem;
 }
 
+.dark .user-name {
+  color: #f3f4f6;
+}
+
 .sidebar-actions {
   padding: 1rem;
   display: flex;
@@ -1703,9 +1804,24 @@ onMounted(async () => {
   letter-spacing: 0.05em;
 }
 
+.dark .section-title {
+  color: #9ca3af;
+}
+
 .sidebar-footer {
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dark .sidebar-footer {
+  border-top-color: #374151;
+}
+
+.logout-btn {
+  margin-top: 0.5rem;
 }
 
 /* Main chat area */
@@ -1717,6 +1833,10 @@ onMounted(async () => {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   opacity: 0;
   transition: opacity 0.5s ease;
+}
+
+.dark .chat-main {
+  background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
 }
 
 .chat-main.fade-in {
@@ -1756,15 +1876,21 @@ onMounted(async () => {
 }
 
 .message-bubble.user {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #79a2ea 0%, #175bef 100%);
   color: white;
   border-radius: 0.75rem 0.75rem 0 0.75rem;
 }
 
 .message-bubble.assistant {
-  background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #eeeef3 0%, #ffffff 100%);
   border-radius: 0.75rem 0.75rem 0.75rem 0;
   border: 1px solid #e5e7eb;
+}
+
+.dark .message-bubble.assistant {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border-color: #374151;
+  color: #f3f4f6;
 }
 
 .message-time {
@@ -1800,6 +1926,10 @@ onMounted(async () => {
   transition: all 0.3s ease;
 }
 
+.dark .thinking-process details {
+  background-color: #1f2937;
+}
+
 .thinking-process details:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -1814,6 +1944,10 @@ onMounted(async () => {
   font-weight: 500;
   color: #4b5563;
   user-select: none;
+}
+
+.dark .thinking-process summary {
+  color: #d1d5db;
 }
 
 .thinking-process summary .arrow {
@@ -1835,16 +1969,22 @@ onMounted(async () => {
   animation: slideDown 0.3s ease;
 }
 
+.dark .thinking-content {
+  color: #d1d5db;
+  background-color: #111827;
+  border-top-color: #374151;
+}
+
 .message-content {
   line-height: 1.5;
 }
 
 /* 代码块样式 */
 :deep(.code-block-wrapper) {
-  margin: 1rem 0;
+  margin: 0rem 0;
   border-radius: 0.5rem;
   overflow: hidden;
-  background-color: #1e1e1e;
+  background-color: rgb(9, 28, 35);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -1853,8 +1993,8 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #2d2d2d;
-  border-bottom: 1px solid #3e3e3e;
+  background-color: rgb(9, 28, 35);
+  border-bottom: 1px solid #fffdfd;
 }
 
 :deep(.code-language) {
@@ -1885,7 +2025,7 @@ onMounted(async () => {
 :deep(.hljs) {
   padding: 1rem;
   border-radius: 0;
-  background-color: #1e1e1e;
+  background-color: rgba(12, 50, 64, 0);
   font-family: 'Fira Code', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
@@ -2900,7 +3040,7 @@ onMounted(async () => {
 
 .dark .form-input:focus,
 .dark .form-textarea:focus {
-  border-color: #3b82f6;
+  border-color: #eceef3;
 }
 
 .dark .form-group label {

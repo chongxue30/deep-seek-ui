@@ -6,7 +6,8 @@ const API_KEY = 'Bearer app-Vr06unpxuIl56BHJ6U0eFTc8'
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Authorization': API_KEY
+    'Authorization': API_KEY,
+    'Content-Type': 'application/json' // 关键：明确指定 JSON
   },
   timeout: 30000
 })
@@ -17,27 +18,14 @@ export const chatAPI = {
     return api.get('/info')
   },
 
-  // 发送对话消息并处理流式响应
-  sendMessage: async (data) => {
-    // 检查并删除query末尾的换行符
-    const query = data.query.endsWith('\n') ? data.query.slice(0, -1) : data.query;
-    
-    const response = await fetch(`${BASE_URL}/chat-messages`, {
+  // 发送对话消息
+  sendMessage: (data) => {
+    return fetch('http://localhost:8080/deepSeek/sendMessage', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': API_KEY
-      },
-      body: JSON.stringify({
-        query: query,
-        conversationId: data.conversationId,
-        user: data.user,
-        responseMode: 'streaming',
-        files: data.files || [],
-        inputs: data.inputs || {}
+      headers: { 'Content-Type': 'application/json' ,
+        'Authorization': `Bearer ${token}`},
+      body: data
       })
-    })
-    return response
   },
 
   // 停止响应
@@ -80,19 +68,16 @@ export const chatAPI = {
   },
 
   // 删除会话
-  deleteConversation: (conversationId: string, user: string) => {
-    return api.delete(`/conversations/${conversationId}`, {
-      data: { user }
-    })
+  deleteConversation: (data:{
+    conversation_id: string,
+    user: string,
+  }) => {
+    return api.post('/deleteConversation', {data})
   },
 
   // 会话重命名
-  renameConversation: (conversationId: string, data: {
-    name?: string,
-    auto_generate?: boolean,
-    user: string
-  }) => {
-    return api.post(`/conversations/${conversationId}/name`, data)
+  renameConversation: ( params) => {
+    return api.post('/renameConversation', {params})
   },
 
   // 上传文件
