@@ -1,7 +1,3 @@
-
-最后，让我们更新ChatHistory.vue组件，使其与我们的新设计风格一致：
-
-```vue project="Chat App" file="ChatHistory.vue" type="vue"
 <template>
   <div class="chat-history">
     <transition-group name="chat-item">
@@ -12,7 +8,7 @@
            @click="$emit('select-chat', chat)">
         <div class="chat-info">
           <div class="chat-name">{{ chat.name }}</div>
-          <div v-if="chat.introduction" class="chat-intro" v-html="chat.introduction"></div>
+<!--          <div v-if="chat.introduction" class="chat-intro" v-html="chat.introduction"></div>-->
           <div class="chat-time">{{ formatTime(chat.created_at) }}</div>
         </div>
         <button

@@ -1,18 +1,18 @@
 <template>
   <div class="chat-history">
-    <div v-for="chat in conversations" 
-         :key="chat.id" 
+    <div v-for="chat in conversations"
+         :key="chat.id"
          class="chat-item"
          :class="{ 'active': chat.id === currentConversationId }"
          @click="$emit('select-chat', chat)">
       <div class="chat-info">
         <div class="chat-name">{{ chat.name }}</div>
-        <div class="chat-intro" v-if="chat.introduction" v-html="chat.introduction"></div>
+<!--        <div class="chat-intro" v-if="chat.introduction" v-html="chat.introduction"></div>-->
         <div class="chat-time">{{ formatTime(chat.created_at) }}</div>
       </div>
-      <el-button 
-        type="danger" 
-        size="small" 
+      <el-button
+        type="danger"
+        size="small"
         @click.stop="$emit('delete-conversation', chat.id)"
       >
         删除
