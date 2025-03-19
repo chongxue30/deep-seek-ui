@@ -1393,19 +1393,51 @@ const submitAddDocument = async () => {
     isAddingDoc.value = true;
 
     if (addDocTab.value === 'upload') {
-      // 上传文件
-      const formData = new FormData();
-      formData.append('file', selectedFile.value);
-      formData.append('datasetId', currentKnowledgeBase.value.id);
+      try {
+        // 获取token
+        const token = localStorage.getItem('token');
 
-      // 这里调用实际的上传API
-      // 模拟上传成功
-      setTimeout(async () => {
+        // 创建FormData对象
+        const formData = new FormData();
+        formData.append('file', selectedFile.value);
+        formData.append('datasetId', currentKnowledgeBase.value.id);
+
+        // 添加固定的JSON数据
+        const processData = JSON.stringify({
+          indexing_technique: "economy",
+          process_rule: {
+            mode: "automatic",
+            rules: {}
+          }
+        });
+        formData.append('data', processData);
+
+        // 发送请求到后端API
+        const response = await fetch('http://10.131.149.41:8080/document/createByFile', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+            // 注意：使用FormData时不要手动设置Content-Type，浏览器会自动设置正确的Content-Type和boundary
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`上传失败: ${response.status}`);
+        }
+
+        const result = await response.text();
+        console.log('上传结果:', result);
+
         showNotification('文件上传成功', 'success');
         await getKnowledgeBases();
         closeAddDocModal();
+      } catch (error) {
+        console.error('文件上传失败:', error);
+        showNotification('文件上传失败: ' + (error instanceof Error ? error.message : '未知错误'), 'error');
+      } finally {
         isAddingDoc.value = false;
-      }, 1500);
+      }
     } else {
       // 手动输入文本创建文档
       const token = localStorage.getItem('token');
