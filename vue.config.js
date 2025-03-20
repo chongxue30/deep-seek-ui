@@ -11,7 +11,7 @@ module.exports = {
     proxy: {
       // 配置反向代理
       '/dev-api': {
-        target: 'http://localhost:8080',
+        target: 'http://10.131.149.41:8080',
         changeOrigin: true,
         pathRewrite: {
           '^/dev-api': ''

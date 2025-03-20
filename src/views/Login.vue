@@ -11,7 +11,7 @@
             <img src="../../public/favicon.png" alt="Logo" class="logo" />
             <div class="logo-glow"></div>
           </div>
-          <h1 class="title">IMUT <span class="highlight">Chat</span></h1>
+          <h1 class="title">数据 <span class="highlight"> · AI导师</span></h1>
           <p class="subtitle">智能对话，从这里开始</p>
         </div>
 
