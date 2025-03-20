@@ -354,7 +354,7 @@
             />
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-upload-cloud"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m16 16-4-4-4 4"></path></svg>
             <p>点击或拖拽文件到此处上传</p>
-            <p class="upload-hint">支持 .txt, .pdf, .doc, .docx 等格式</p>
+            <p class="upload-hint">支持 TXT、MARKDOWN、MDX、PDF、HTML、XLSX、XLS、DOCX、CSV、MD、HTM 格式，每个文件不超过 15MB</p>
           </div>
 
           <div v-if="selectedFile" class="selected-file">
@@ -1369,9 +1369,42 @@ const triggerFileInput = () => {
 }
 
 // 文件拖放处理
+// 修改文件拖放处理函数
 const onFileDrop = (event) => {
   const file = event.dataTransfer.files[0];
   if (file) {
+    // 检查文件大小
+    if (file.size > 15 * 1024 * 1024) {
+      showNotification('文件大小不能超过 15MB', 'error');
+      return;
+    }
+
+    // 检查文件类型
+    const allowedTypes = [
+      'text/plain',
+      'text/markdown',
+      'application/pdf',
+      'text/html',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/csv',
+      'text/markdown',
+      'text/html'
+    ];
+
+    const allowedExtensions = [
+      '.txt', '.markdown', '.mdx', '.pdf', '.html',
+      '.xlsx', '.xls', '.docx', '.csv', '.md', '.htm'
+    ];
+
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      showNotification('不支持的文件类型', 'error');
+      return;
+    }
+
     selectedFile.value = file;
   }
 }
@@ -1380,6 +1413,38 @@ const onFileDrop = (event) => {
 const onFileSelected = (event) => {
   const file = event.target.files[0];
   if (file) {
+    // 检查文件大小
+    if (file.size > 15 * 1024 * 1024) {
+      showNotification('文件大小不能超过 15MB', 'error');
+      return;
+    }
+
+    // 检查文件类型
+    const allowedTypes = [
+      'text/plain',
+      'text/markdown',
+      'application/pdf',
+      'text/html',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/csv',
+      'text/markdown',
+      'text/html'
+    ];
+
+    const allowedExtensions = [
+      '.txt', '.markdown', '.mdx', '.pdf', '.html',
+      '.xlsx', '.xls', '.docx', '.csv', '.md', '.htm'
+    ];
+
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      showNotification('不支持的文件类型', 'error');
+      return;
+    }
+
     selectedFile.value = file;
   }
 }
