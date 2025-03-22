@@ -11,7 +11,7 @@
             <img src="../../public/favicon.png" alt="Logo" class="logo" />
             <div class="logo-glow"></div>
           </div>
-          <h1 class="title">数据 <span class="highlight"> · AI导师</span></h1>
+          <h1 class="title">数据 <span class="lowlight"> · </span><span class="highlight">AI导师</span></h1>
           <p class="subtitle">智能对话，从这里开始</p>
         </div>
 
@@ -337,15 +337,16 @@ const handleKeyDown = (e) => {
 // 变量定义
 $primary-color: #4F46E5;
 $primary-hover: #4338CA;
-$primary-glow: rgba(79, 70, 229, 0.5);
+$primary-glow: rgba(169, 167, 204, 0.5);
 $background-dark: #0F172A;
-$card-bg: rgba(30, 41, 59, 0.8);
+$card-bg: rgba(135, 148, 172, 0.8);
 $card-border: rgba(255, 255, 255, 0.1);
 $input-bg: rgba(51, 65, 85, 0.8);
 $input-border: rgba(71, 85, 105, 0.5);
 $input-focus-border: #60A5FA;
 $text-light: #F8FAFC;
-$text-muted: #94A3B8;
+$text-muted: #f6f8fa;  // 将文本颜色改为灰色
+$icon-color: #F8FAFC;  // 修改为白色，使其在深色背景上可见
 $error-color: #EF4444;
 $success-color: #10B981;
 
@@ -462,14 +463,14 @@ $success-color: #10B981;
   object-fit: contain;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.5));
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
 .logo-glow {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0%;
+  //left: 50%;
+  //transform: translate(-50%, -50%);
   width: 100%;
   height: 100%;
   background: radial-gradient(circle, $primary-glow 0%, rgba(79, 70, 229, 0) 70%);
@@ -486,8 +487,15 @@ $success-color: #10B981;
   letter-spacing: -0.5px;
   text-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
 
+  .lowlight{
+    background: linear-gradient(90deg, #1e14a5 0%, #ededf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
   .highlight {
-    background: linear-gradient(90deg, #4F46E5 0%, #8B5CF6 100%);
+    background: linear-gradient(90deg, #1e14a5 0%, #4F46E5 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -524,10 +532,11 @@ $success-color: #10B981;
   align-items: center;
 }
 
+// 修改input-icon样式
 .input-icon {
   position: absolute;
   left: 16px;
-  color: $text-muted;
+  color: $icon-color;  // 现在使用白色图标
   display: flex;
   align-items: center;
   justify-content: center;

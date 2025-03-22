@@ -49,10 +49,12 @@
       <div class="sidebar-footer">
         <KnowledgeBase
             :user-info="userInfo"
+            :is-teacher="isTeacher"
             @create-knowledge-base="handleCreateKnowledgeBase"
             @file-change="handleFileChange"
             @show-knowledge-modal="openKnowledgeModal"
         />
+
 
         <!-- Logout -->
         <button class="action-button danger logout-btn" @click="handleLogout">
@@ -247,11 +249,11 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>
                 查看文档
               </button>
-              <button class="action-button small primary" @click="showAddDocumentModal(kb)">
+              <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>
                 添加文档
               </button>
-              <button class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">
+              <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
               </button>
             </div>
@@ -270,10 +272,10 @@
     <!-- 创建知识库弹窗 -->
     <div v-if="showCreateKBModal" class="modal-backdrop" @click="closeCreateKBModal"></div>
     <div v-if="showCreateKBModal" class="modal-container create-modal">
-      <div class="modal-header">
-        <h3>创建知识库</h3>
-        <button class="close-button" @click="closeCreateKBModal">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+      <div class="modal-footer">
+        <button v-if="isTeacher" class="action-button primary" @click="showCreateKnowledgeBaseModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+          创建知识库
         </button>
       </div>
 
@@ -449,7 +451,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   查看
                 </button>
-                <button class="delete-btn" @click="confirmDeleteDocument(doc.id, doc.name)">
+                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteDocument(doc.id, doc.name)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
                 </button>
               </div>
@@ -484,7 +486,7 @@
       </div>
 
       <div class="modal-footer">
-        <button class="action-button primary" @click="showAddDocumentModal(currentKnowledgeBase)">
+        <button v-if="isTeacher" class="action-button primary" @click="showAddDocumentModal(currentKnowledgeBase)">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>
           添加文档
         </button>
@@ -597,7 +599,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, inject, watch } from 'vue'
+import {ref, onMounted, nextTick, inject, watch, computed} from 'vue'
 import { useRouter } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
@@ -726,6 +728,78 @@ const formatMarkdown = (text) => {
   if (!text) return '';
   return md.render(text);
 }
+
+// 添加一个计算属性来判断用户是否为教师
+const isTeacher = computed(() => {
+  if (!userInfo.value || !userInfo.value.roles || !Array.isArray(userInfo.value.roles)) {
+    return false;
+  }
+
+  // 检查roles数组中是否有对象的roleKey属性是'tea'
+  return userInfo.value.roles.some(role => role.roleKey === 'tea');
+});
+
+// 添加一个计算属性来判断用户是否为学生
+const isStudent = computed(() => {
+  if (!userInfo.value || !userInfo.value.roles || !Array.isArray(userInfo.value.roles)) {
+    return false;
+  }
+
+  // 检查roles数组中是否有对象的roleKey属性是'stu'
+  return userInfo.value.roles.some(role => role.roleKey === 'stu');
+});
+
+// 创建知识库
+const showCreateKnowledgeBaseModal = () => {
+  // 只有教师可以创建知识库
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error');
+    return;
+  }
+  showCreateKBModal.value = true;
+}
+
+// 添加文档
+const showAddDocumentModal = (kb) => {
+  // 只有教师可以添加文档
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error');
+    return;
+  }
+  currentKnowledgeBase.value = kb;
+  addDocTab.value = 'upload';
+  selectedFile.value = null;
+  newDocument.value = {
+    name: '',
+    text: ''
+  };
+  showAddDocModal.value = true;
+}
+
+// 确认删除知识库
+const confirmDeleteKnowledgeBase = (id, name) => {
+  // 只有教师可以删除知识库
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error');
+    return;
+  }
+  deleteType.value = 'kb';
+  itemToDelete.value = { id, name };
+  showDeleteConfirm.value = true;
+}
+
+// 确认删除文档
+const confirmDeleteDocument = (id, name) => {
+  // 只有教师可以删除文档
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error');
+    return;
+  }
+  deleteType.value = 'doc';
+  itemToDelete.value = { id, name };
+  showDeleteConfirm.value = true;
+}
+
 
 const scrollToBottom = async () => {
   await nextTick()
@@ -1306,10 +1380,6 @@ const getKnowledgeBases = async () => {
   }
 }
 
-// 显示创建知识库弹窗
-const showCreateKnowledgeBaseModal = () => {
-  showCreateKBModal.value = true;
-}
 
 // 关闭创建知识库弹窗
 const closeCreateKBModal = () => {
@@ -1344,18 +1414,6 @@ const submitCreateKnowledgeBase = async () => {
   } finally {
     isCreatingKB.value = false;
   }
-}
-
-// 显示添加文档弹窗
-const showAddDocumentModal = (kb) => {
-  currentKnowledgeBase.value = kb;
-  addDocTab.value = 'upload';
-  selectedFile.value = null;
-  newDocument.value = {
-    name: '',
-    text: ''
-  };
-  showAddDocModal.value = true;
 }
 
 // 关闭添加文档弹窗
@@ -1569,20 +1627,6 @@ const viewDocument = async (doc) => {
 // 关闭文档内容弹窗
 const closeDocContentModal = () => {
   showDocContentModal.value = false;
-}
-
-// 确认删除知识库
-const confirmDeleteKnowledgeBase = (id, name) => {
-  deleteType.value = 'kb';
-  itemToDelete.value = { id, name };
-  showDeleteConfirm.value = true;
-}
-
-// 确认删除文档
-const confirmDeleteDocument = (id, name) => {
-  deleteType.value = 'doc';
-  itemToDelete.value = { id, name };
-  showDeleteConfirm.value = true;
 }
 
 // 取消删除
