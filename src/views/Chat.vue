@@ -10,9 +10,24 @@
             {{ userInfo?.nickName?.charAt(0) || userInfo?.userName?.charAt(0) || 'U' }}
           </div>
         </div>
-        <div class="user-name">
-          {{ userInfo ? userInfo.nickName || userInfo.userName : 'User' }}
+        <div class="user-info">
+          <div class="user-name-row">
+            <div class="user-name">
+              {{ userInfo ? userInfo.nickName || userInfo.userName : 'User' }}
+            </div>
+            <!-- Teacher badge -->
+            <div v-if="isTeacher" class="teacher-badge">教师</div>
+          </div>
         </div>
+
+        <!-- Management toggle button for teachers - moved outside user-info for better positioning -->
+        <button v-if="isTeacher" class="management-toggle-btn" @click="toggleAdminMode">
+          <span class="toggle-icon">
+            <svg v-if="isAdminMode" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </span>
+          <span class="toggle-text">{{ isAdminMode ? '返回聊天' : '工作台' }}</span>
+        </button>
       </div>
 
       <!-- Actions -->
@@ -47,15 +62,6 @@
 
       <!-- Knowledge base section - moved to bottom -->
       <div class="sidebar-footer">
-        <KnowledgeBase
-            :user-info="userInfo"
-            :is-teacher="isTeacher"
-            @create-knowledge-base="handleCreateKnowledgeBase"
-            @file-change="handleFileChange"
-            @show-knowledge-modal="openKnowledgeModal"
-        />
-
-
         <!-- Logout -->
         <button class="action-button danger logout-btn" @click="handleLogout">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -65,8 +71,8 @@
     </aside>
 
     <!-- Main chat area -->
-    <main class="chat-main" :class="{ 'fade-in': true }">
-      <!-- Messages -->
+    <main v-if="!isAdminMode" class="chat-main" :class="{ 'fade-in': true }">
+      <!-- 聊天界面 - 消息内容 -->
       <div class="messages-container" ref="messagesContainer">
         <transition-group name="message-fade">
           <div v-for="message in messages"
@@ -200,6 +206,280 @@
             </button>
           </div>
         </transition>
+      </div>
+    </main>
+
+    <main v-else class="admin-main">
+      <div class="admin-header">
+        <h2>工作台</h2>
+      </div>
+
+      <!-- 管理页面导航 -->
+      <div class="admin-nav">
+        <button
+            class="admin-nav-item"
+            :class="{ active: adminActiveTab === 'knowledge' }"
+            @click="adminActiveTab = 'knowledge'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+          知识库管理
+        </button>
+        <button
+            class="admin-nav-item"
+            :class="{ active: adminActiveTab === 'course' }"
+            @click="adminActiveTab = 'course'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          课程管理
+        </button>
+      </div>
+
+      <!-- 管理页面内容 -->
+      <div class="admin-content">
+        <!-- 知识库管理内容 -->
+        <div v-if="adminActiveTab === 'knowledge'" class="admin-panel">
+          <div class="admin-panel-header">
+            <h3>知识库列表</h3>
+            <button class="action-button primary" @click="showCreateKnowledgeBaseModal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              创建知识库
+            </button>
+          </div>
+
+          <div v-if="isLoadingKnowledgeBases" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+          </div>
+
+          <div v-else-if="knowledgeBases.length === 0" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
+            <p>暂无知识库，请点击上方按钮创建</p>
+          </div>
+
+          <div v-else class="knowledge-list">
+            <div v-for="kb in knowledgeBases"
+                 :key="kb.id"
+                 class="knowledge-item">
+              <div class="knowledge-info">
+                <div class="knowledge-name">{{ kb.name }}</div>
+                <div class="knowledge-details" v-if="kb.description || kb.document_count !== undefined">
+                  <span v-if="kb.description" class="description">{{ kb.description }}</span>
+                  <div class="stats">
+                    <span v-if="kb.document_count !== undefined" class="document-count">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>
+                      文档数: {{ kb.document_count }}
+                    </span>
+                    <span v-if="kb.word_count !== undefined" class="word-count">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-text"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path d="M15.1 18H3"></path></svg>
+                      词数: {{ kb.word_count }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="knowledge-actions">
+                <button class="action-button small" @click="showDocumentsModal(kb)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>
+                  查看文档
+                </button>
+                <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>
+                  添加文档
+                </button>
+                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 课程管理内容 -->
+        <div v-if="adminActiveTab === 'course'" class="admin-panel">
+          <div class="admin-panel-header">
+            <h3>课程列表</h3>
+            <button class="action-button primary" @click="showCreateClassForm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              创建新课程
+            </button>
+          </div>
+
+          <div v-if="isLoadingClassList" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>加载课程列表中...</p>
+          </div>
+
+          <div v-else-if="classList.length === 0" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            <p>暂无课程，请点击上方按钮创建新课程</p>
+          </div>
+
+          <div class="admin-content-split">
+            <div class="class-list-panel">
+              <div class="panel-section-header">
+                <h4>课程列表</h4>
+                <span class="class-count">{{ classList.length }}个课程</span>
+              </div>
+              <div class="class-list-container">
+                <div v-for="classItem in classList"
+                     :key="classItem.classId"
+                     class="class-item"
+                     :class="{ active: selectedClass?.classId === classItem.classId }"
+                     @click="selectClass(classItem)">
+                  <div class="class-info">
+                    <div class="class-name">{{ classItem.className }}</div>
+                    <div class="class-details">
+                      <span class="student-count" v-if="classItem.studentCount !== undefined">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        {{ classItem.studentCount || 0 }}名学生
+                      </span>
+                      <span class="class-date">{{ formatDate(classItem.createTime) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 使用新的课程管理组件 -->
+            <CourseManagement
+                :adminActiveTab="adminActiveTab"
+                :selectedClass="selectedClass"
+                :classStudents="classStudents"
+                :isLoadingStudents="isLoadingStudents"
+                :studentCurrentPage="studentCurrentPage"
+                :studentTotalPages="studentTotalPages"
+                :selectedStudents="selectedStudents"
+                :selectAllStudents="selectAllStudents"
+                :knowledgeBases="knowledgeBases"
+                :isLoadingKnowledgeBases="isLoadingKnowledgeBases"
+                @show-add-students-modal="showAddStudentsModal"
+                @toggle-select-all-students="toggleSelectAllStudents"
+                @toggle-student-selection="toggleStudentSelection"
+                @batch-remove-students="batchRemoveStudents"
+                @remove-student="removeStudentFromClass"
+                @change-student-page="changeStudentPage"
+                @show-create-kb-modal="showCreateKnowledgeBaseModal"
+            />
+            <!-- 学生管理面板 - 仅在选择了课程时显示 -->
+            <div v-if="selectedClass" class="student-management-panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <h4>{{ selectedClass.className }}</h4>
+                  <div class="panel-subtitle">学生名单</div>
+                </div>
+                <div class="panel-actions">
+                  <button class="action-button small primary" @click="showAddStudentsModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="16" x2="22" y1="11" y2="11"></line></svg>
+                    添加学生
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="isLoadingStudents" class="loading-container small">
+                <div class="loading-spinner"></div>
+                <p>加载学生名单中...</p>
+              </div>
+
+              <div v-else-if="classStudents.length === 0" class="empty-state small">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-x"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" x2="22" y1="8" y2="13"></line><line x1="22" x2="17" y1="8" y2="13"></line></svg>
+                <p>课程暂无学生，请点击"添加学生"按钮添加</p>
+              </div>
+
+              <!-- Student list with multi-select, avatars, and pagination -->
+              <div v-else class="student-list">
+                <!-- Student list header with select all checkbox and batch actions -->
+                <div class="student-list-header">
+                  <div class="student-selection">
+                    <input
+                        type="checkbox"
+                        id="select-all-students"
+                        :checked="selectAllStudents"
+                        @change="toggleSelectAllStudents"
+                    />
+                    <label for="select-all-students">全选</label>
+                  </div>
+                  <button
+                      v-if="selectedStudents.length > 0"
+                      class="action-button small danger batch-remove-btn"
+                      @click="batchRemoveStudents"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users-x"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" x2="22" y1="8" y2="13"></line><line x1="22" x2="17" y1="8" y2="13"></line></svg>
+                    批量移除 ({{ selectedStudents.length }})
+                  </button>
+                </div>
+
+                <!-- Student grid with avatars and checkboxes -->
+                <div class="student-grid">
+                  <div
+                      v-for="student in classStudents"
+                      :key="student.studentId"
+                      class="student-card"
+                      :class="{ 'selected': selectedStudents.includes(student.studentId) }"
+                  >
+                    <div class="student-selection-checkbox">
+                      <input
+                          type="checkbox"
+                          :id="`student-${student.studentId}`"
+                          :checked="selectedStudents.includes(student.studentId)"
+                          @change="toggleStudentSelection(student.studentId)"
+                      />
+                    </div>
+
+                    <!-- Student avatar with color based on name -->
+                    <div class="student-avatar" :style="{ backgroundColor: getAvatarColor(student.studentName) }">
+                      {{ getInitials(student.studentName) }}
+                    </div>
+
+                    <div class="student-info">
+                      <div class="student-name">{{ student.studentName }}</div>
+                      <div class="student-details">
+                        <span class="student-id">学号: {{ student.studentNo || student.studentId }}</span>
+                        <span class="student-class">班级: {{ student.className }}</span>
+                      </div>
+                    </div>
+
+                    <button class="action-button small danger" @click="removeStudentFromClass(student)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-minus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="16" x2="22" y1="11" y2="11"></line></svg>
+                      移除
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Pagination controls -->
+                <div class="pagination" v-if="studentTotalPages > 1">
+                  <button
+                      class="pagination-button"
+                      :disabled="studentCurrentPage === 1"
+                      @click="changeStudentPage(studentCurrentPage - 1)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                    上一页
+                  </button>
+
+                  <div class="pagination-info">
+                    第 {{ studentCurrentPage }} 页 / 共 {{ studentTotalPages }} 页
+                  </div>
+
+                  <button
+                      class="pagination-button"
+                      :disabled="studentCurrentPage === studentTotalPages || studentTotalPages === 0"
+                      @click="changeStudentPage(studentCurrentPage + 1)"
+                  >
+                    下一页
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state when no course is selected -->
+            <div v-else class="student-management-panel empty-panel">
+              <div class="empty-panel-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                <p>请从左侧选择一个课程查看学生名单</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -459,29 +739,29 @@
           </div>
 
           <!-- 分页控件 -->
-          <div class="pagination">
-            <button
-                class="pagination-button"
-                :disabled="currentPage === 1"
-                @click="changePage(currentPage - 1)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
-              上一页
-            </button>
+<!--          <div class="pagination">-->
+<!--            <button-->
+<!--                class="pagination-button"-->
+<!--                :disabled="currentPage === 1"-->
+<!--                @click="changePage(currentPage - 1)"-->
+<!--            >-->
+<!--              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>-->
+<!--              上一页-->
+<!--            </button>-->
 
-            <div class="pagination-info">
-              第 {{ currentPage }} 页 / 共 {{ totalPages }} 页
-            </div>
+<!--            <div class="pagination-info">-->
+<!--              第 {{ currentPage }} 页 / 共 {{ totalPages }} 页-->
+<!--            </div>-->
 
-            <button
-                class="pagination-button"
-                :disabled="currentPage === totalPages || totalPages === 0"
-                @click="changePage(currentPage + 1)"
-            >
-              下一页
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-          </div>
+<!--            <button-->
+<!--                class="pagination-button"-->
+<!--                :disabled="currentPage === totalPages || totalPages === 0"-->
+<!--                @click="changePage(currentPage + 1)"-->
+<!--            >-->
+<!--              下一页-->
+<!--              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>-->
+<!--            </button>-->
+<!--          </div>-->
         </div>
       </div>
 
@@ -550,6 +830,304 @@
       </div>
     </div>
 
+    <!-- 创建课程弹窗 -->
+    <div v-if="showClassModal" class="modal-backdrop" @click="closeClassModal"></div>
+    <div v-if="showClassModal" class="modal-container class-modal">
+      <div class="modal-header">
+        <h3>课程管理</h3>
+        <button class="close-button" @click="closeClassModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div v-if="isLoadingClassList" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>加载课程列表中...</p>
+        </div>
+
+        <div v-else-if="classList.length === 0" class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+          <p>暂无课程，请点击下方按钮创建新课程</p>
+        </div>
+
+        <div v-else class="class-list">
+          <div v-for="classItem in classList"
+               :key="classItem.classId"
+               class="class-item"
+               :class="{ active: selectedClass?.classId === classItem.classId }"
+               @click="selectClass(classItem)">
+            <div class="class-info">
+              <div class="class-name">{{ classItem.className }}</div>
+              <div class="class-details">
+            <span class="student-count" v-if="classItem.studentCount !== undefined">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              学生数: {{ classItem.studentCount || 0 }}
+            </span>
+                <span class="class-date">创建时间: {{ formatDate(classItem.createTime) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 学生管理面板 - 仅在选择了课程时显示 -->
+        <div v-if="selectedClass" class="student-management-panel">
+          <div class="panel-header">
+            <h4>{{ selectedClass.className }} - 学生名单</h4>
+            <div class="panel-actions">
+              <button class="action-button small primary" @click="showAddStudentsModal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="16" x2="22" y1="11" y2="11"></line></svg>
+                添加学生
+              </button>
+            </div>
+          </div>
+
+          <div v-if="isLoadingStudents" class="loading-container small">
+            <div class="loading-spinner"></div>
+            <p>加载学生名单中...</p>
+          </div>
+
+          <div v-else-if="classStudents.length === 0" class="empty-state small">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-x"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" x2="22" y1="8" y2="13"></line><line x1="22" x2="17" y1="8" y2="13"></line></svg>
+            <p>课程暂无学生，请点击"添加学生"按钮添加</p>
+          </div>
+
+          <div v-else class="student-list">
+            <div v-for="student in classStudents" :key="student.studentId" class="student-item">
+              <div class="student-info">
+                <div class="student-name">{{ student.studentName }}</div>
+                <div class="student-details">
+                  <span class="student-id">学号: {{ student.studentId }}</span>
+                  <span class="student-class">班级: {{ student.className }}</span>
+                </div>
+              </div>
+              <button class="action-button small danger" @click="removeStudentFromClass(student)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-minus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="16" x2="22" y1="11" y2="11"></line></svg>
+                移除
+              </button>
+            </div>
+            <!-- 学生列表分页控件 -->
+            <div class="pagination" v-if="studentTotalPages > 1">
+              <button
+                  class="pagination-button"
+                  :disabled="studentCurrentPage === 1"
+                  @click="changeStudentPage(studentCurrentPage - 1)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                上一页
+              </button>
+
+              <div class="pagination-info">
+                第 {{ studentCurrentPage }} 页 / 共 {{ studentTotalPages }} 页
+              </div>
+
+              <button
+                  class="pagination-button"
+                  :disabled="studentCurrentPage === studentTotalPages || studentTotalPages === 0"
+                  @click="changeStudentPage(studentCurrentPage + 1)"
+              >
+                下一页
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-button primary" @click="showCreateClassForm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+          <span>创建新课程</span>
+        </button>
+        <button class="action-button" @click="closeClassModal">关闭</button>
+      </div>
+    </div>
+
+    <!-- 添加学生弹窗 -->
+    <div v-if="showAddStudentModal" class="modal-backdrop" @click="closeAddStudentModal"></div>
+    <div v-if="showAddStudentModal" class="modal-container add-student-modal">
+      <div class="modal-header">
+        <h3>向 {{ selectedClass?.className }} 添加学生</h3>
+        <button class="close-button" @click="closeAddStudentModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="add-student-tabs">
+          <button
+              class="tab-button"
+              :class="{ 'active': addStudentTab === 'class' }"
+              @click="addStudentTab = 'class'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            按班级添加
+          </button>
+          <button
+              class="tab-button"
+              :class="{ 'active': addStudentTab === 'manual' }"
+              @click="addStudentTab = 'manual'"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="16" x2="22" y1="11" y2="11"></line></svg>
+            手动添加学生
+          </button>
+        </div>
+
+        <!-- 按班级添加 -->
+        <div v-if="addStudentTab === 'class'" class="class-selection-tab">
+          <div v-if="isLoadingClassNames" class="loading-container small">
+            <div class="loading-spinner"></div>
+            <p>加载班级列表中...</p>
+          </div>
+          <div v-else>
+            <div class="form-group">
+              <label for="class-select">选择班级</label>
+              <select
+                  id="class-select"
+                  v-model="selectedClassName"
+                  class="form-input"
+              >
+                <option value="">请选择班级</option>
+                <option v-for="className in classNameList" :key="className" :value="className">
+                  {{ className }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="selectedClassName" class="preview-container">
+              <div class="preview-header">
+                <h4>预览: {{ selectedClassName }} 班级学生 ({{ previewStudents.length }}人)</h4>
+              </div>
+
+              <div v-if="isLoadingPreviewStudents" class="loading-container small">
+                <div class="loading-spinner"></div>
+                <p>加载学生列表中...</p>
+              </div>
+
+              <div v-else-if="previewStudents.length === 0" class="empty-state small">
+                <p>该班级暂无学生</p>
+              </div>
+
+              <div v-else class="preview-students">
+                <div v-for="student in previewStudents" :key="student.studentId" class="preview-student-item">
+                  <div class="student-name">{{ student.studentName }}</div>
+                  <div class="student-id">{{ student.studentId }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 手动添加学生 -->
+        <div v-if="addStudentTab === 'manual'" class="manual-add-tab">
+          <div class="form-group">
+            <label for="student-id">学生学号</label>
+            <input
+                type="text"
+                id="student-id"
+                v-model="manualStudentId"
+                placeholder="请输入学生学号"
+                class="form-input"
+            />
+          </div>
+
+          <div v-if="manualStudentId && manualStudentInfo" class="student-preview">
+            <div class="preview-header">
+              <h4>学生信息</h4>
+            </div>
+            <div class="student-info-preview">
+              <div class="info-item">
+                <span class="label">姓名:</span>
+                <span class="value">{{ manualStudentInfo.studentName }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">学号:</span>
+                <span class="value">{{ manualStudentInfo.studentNo }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">班级:</span>
+                <span class="value">{{ manualStudentInfo.className }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="manualStudentId && isSearchingStudent" class="loading-container small">
+            <div class="loading-spinner"></div>
+            <p>查询学生信息中...</p>
+          </div>
+
+          <div v-else-if="manualStudentId && !manualStudentInfo && !isSearchingStudent" class="empty-state small">
+            <p>未找到该学号的学生</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-button" @click="closeAddStudentModal">取消</button>
+        <button
+            class="action-button primary"
+            @click="confirmAddStudents"
+            :disabled="isAddingStudents ||
+                (addStudentTab === 'class' && !selectedClassName) ||
+                (addStudentTab === 'manual' && !manualStudentInfo)"
+        >
+          <span v-if="isAddingStudents">添加中...</span>
+          <span v-else>确认添加</span>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 创建新课程表单 -->
+    <div v-if="showClassForm" class="modal-backdrop" @click="closeClassForm"></div>
+    <div v-if="showClassForm" class="modal-container create-class-form">
+      <div class="modal-header">
+        <h3>创建新课程</h3>
+        <button class="close-button" @click="closeClassForm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="new-class-name">课程名称</label>
+          <input
+              type="text"
+              id="new-class-name"
+              v-model="newClass.className"
+              placeholder="请输入课程名称"
+              class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="new-kz-select">所属课组</label>
+          <select
+              id="new-kz-select"
+              v-model="newClass.kzId"
+              class="form-input"
+          >
+            <option value="">请选择课组</option>
+            <option v-for="kz in kzList" :key="kz.kzId" :value="kz.kzId">
+              {{ kz.kzName }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-button" @click="closeClassForm">取消</button>
+        <button
+            class="action-button primary"
+            @click="submitCreateClass"
+            :disabled="!newClass.className || !newClass.kzId || isCreatingClass"
+        >
+          <span v-if="isCreatingClass">创建中...</span>
+          <span v-else>确认创建</span>
+        </button>
+      </div>
+    </div>
+
     <!-- 登出确认弹窗 -->
     <div v-if="showLogoutConfirm" class="modal-backdrop" @click="cancelLogout"></div>
     <div v-if="showLogoutConfirm" class="modal-container logout-modal">
@@ -605,10 +1183,9 @@ import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css' // 使用深色主题的代码高亮
 import ChatHistory from './ChatHistory.vue'
-import KnowledgeBase from '@/components/KnowledgeBase.vue'
 import { chatAPI } from '@/api/index'
 import { authAPI } from '@/api/auth'
-
+import CourseManagement from './course-management.vue';
 const router = useRouter()
 
 // Initialize markdown-it with code highlighting and custom renderer for code blocks
@@ -636,6 +1213,21 @@ const md = new MarkdownIt({
     return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
   }
 })
+
+// 添加管理界面相关状态
+const isAdminMode = ref(false)
+const adminActiveTab = ref('knowledge') // 'knowledge' 或 'course'
+
+// 切换管理模式
+const toggleAdminMode = () => {
+  isAdminMode.value = !isAdminMode.value
+
+  // 如果切换到管理模式，加载相关数据
+  if (isAdminMode.value) {
+      getKnowledgeBases()
+      getClassList()
+    }
+}
 
 // Add script to document for copying code
 onMounted(() => {
@@ -680,7 +1272,7 @@ const showLogoutConfirm = ref(false)
 
 // 分页相关状态
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(1000)
 const totalPages = ref(1)
 const totalItems = ref(0)
 
@@ -717,6 +1309,21 @@ const newKnowledgeBase = ref({
   description: ''
 })
 
+// 添加课程管理相关状态
+const showClassModal = ref(false)
+const showClassForm = ref(false)
+const isLoadingKzList = ref(false)
+const isCreatingClass = ref(false)
+const kzList = ref([])
+const classList = ref([])
+const newClass = ref({
+  className: '',
+  kzId: '',
+  teacherId: '',  // 将在提交时从用户信息获取
+  status: '0'     // 默认状态：0-正常
+})
+
+
 // 新文档表单
 const newDocument = ref({
   name: '',
@@ -739,15 +1346,7 @@ const isTeacher = computed(() => {
   return userInfo.value.roles.some(role => role.roleKey === 'tea');
 });
 
-// 添加一个计算属性来判断用户是否为学生
-const isStudent = computed(() => {
-  if (!userInfo.value || !userInfo.value.roles || !Array.isArray(userInfo.value.roles)) {
-    return false;
-  }
 
-  // 检查roles数组中是否有对象的roleKey属性是'stu'
-  return userInfo.value.roles.some(role => role.roleKey === 'stu');
-});
 
 // 创建知识库
 const showCreateKnowledgeBaseModal = () => {
@@ -757,6 +1356,453 @@ const showCreateKnowledgeBaseModal = () => {
     return;
   }
   showCreateKBModal.value = true;
+}
+
+// 添加课程管理相关状态
+// 在现有代码基础上添加以下状态
+const isLoadingClassList = ref(false)
+const isLoadingStudents = ref(false)
+const selectedClass = ref(null)
+const classStudents = ref([])
+
+// 添加学生相关状态
+const showAddStudentModal = ref(false)
+const addStudentTab = ref('class')
+const isLoadingClassNames = ref(false)
+const classNameList = ref([])
+const selectedClassName = ref('')
+const previewStudents = ref([])
+const isLoadingPreviewStudents = ref(false)
+const isAddingStudents = ref(false)
+const manualStudentId = ref('')
+const manualStudentInfo = ref(null)
+const isSearchingStudent = ref(false)
+
+
+// 获取课程列表
+const getClassList = async () => {
+  try {
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/class/list', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取课程列表失败')
+    }
+
+    const data = await res.json()
+    if (data.rows && Array.isArray(data.rows)) {
+      classList.value = data.rows
+    } else {
+      classList.value = []
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+    showNotification('获取课程列表失败', 'error')
+  }
+}
+
+// 学生列表分页相关状态
+const studentCurrentPage = ref(1)
+const studentPageSize = ref(10)
+const studentTotalPages = ref(1)
+const studentTotalItems = ref(0)
+
+// 切换学生列表页码
+const changeStudentPage = (page) => {
+  if (page < 1 || page > studentTotalPages.value) return
+  studentCurrentPage.value = page
+  getClassStudents(selectedClass.value.classId)
+}
+
+// 选择课程时重置分页
+const selectClass = async (classItem) => {
+  selectedClass.value = classItem
+  studentCurrentPage.value = 1 // 重置为第一页
+  await getClassStudents(classItem.classId)
+}
+// Add these new state variables for student selection
+const selectedStudents = ref([])
+const selectAllStudents = ref(false)
+
+// Update the getClassStudents function to properly handle pagination
+const getClassStudents = async (classId) => {
+  if (!classId) return
+
+  try {
+    isLoadingStudents.value = true
+    const token = localStorage.getItem('token')
+
+    // Add pagination parameters
+    const res = await fetch(`/dev-api/system/class/students/${classId}?pageNum=${studentCurrentPage.value}&pageSize=${studentPageSize.value}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取课程学生名单失败')
+    }
+
+    const data = await res.json()
+    if (data.data && Array.isArray(data.data.rows)) {
+      classStudents.value = data.data.rows
+      studentTotalItems.value = data.data.total || 0
+      studentTotalPages.value = Math.ceil(studentTotalItems.value / studentPageSize.value) || 1
+    } else if (data.data && Array.isArray(data.data)) {
+      // 兼容不同的API返回格式
+      classStudents.value = data.data
+      studentTotalItems.value = data.data.length
+      studentTotalPages.value = 1
+    } else {
+      classStudents.value = []
+      studentTotalItems.value = 0
+      studentTotalPages.value = 1
+    }
+
+    // Reset selection when loading new data
+    selectedStudents.value = []
+    selectAllStudents.value = false
+  } catch (error) {
+    console.error('获取课程学生名单失败:', error)
+    showNotification('获取课程学生名单失败', 'error')
+    classStudents.value = []
+    studentTotalItems.value = 0
+    studentTotalPages.value = 1
+  } finally {
+    isLoadingStudents.value = false
+  }
+}
+
+// Add a function to toggle student selection
+const toggleStudentSelection = (studentId) => {
+  const index = selectedStudents.value.indexOf(studentId)
+  if (index === -1) {
+    selectedStudents.value.push(studentId)
+  } else {
+    selectedStudents.value.splice(index, 1)
+  }
+}
+
+// Add a function to toggle select all students
+const toggleSelectAllStudents = () => {
+  if (selectAllStudents.value) {
+    // Deselect all
+    selectedStudents.value = []
+  } else {
+    // Select all
+    selectedStudents.value = classStudents.value.map(student => student.studentId)
+  }
+  selectAllStudents.value = !selectAllStudents.value
+}
+
+// Update the removeStudentFromClass function to handle multiple students
+const removeStudentFromClass = async (student) => {
+  // If a specific student is provided, just remove that one
+  const studentIds = student ? [student.studentId] : selectedStudents.value
+
+  if (studentIds.length === 0) {
+    showNotification('请先选择要移除的学生', 'error')
+    return
+  }
+
+  const confirmMessage = student
+      ? `确定要将学生 ${student.studentName} 从课程中移除吗？`
+      : `确定要将选中的 ${studentIds.length} 名学生从课程中移除吗？`
+
+  if (!confirm(confirmMessage)) {
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/class/students/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        classId: selectedClass.value.classId,
+        studentIds: studentIds // Changed to send array of IDs
+      })
+    })
+
+    if (!res.ok) {
+      throw new Error('移除学生失败')
+    }
+
+    const data = await res.json()
+    if (data.code === 200) {
+      showNotification('移除学生成功', 'success')
+      // Reset selection
+      selectedStudents.value = []
+      selectAllStudents.value = false
+      // 刷新学生列表
+      await getClassStudents(selectedClass.value.classId)
+    } else {
+      throw new Error(data.msg || '移除学生失败')
+    }
+  } catch (error) {
+    console.error('移除学生失败:', error)
+    showNotification(`移除学生失败: ${error.message}`, 'error')
+  } finally {
+    isRemovingStudents.value = false
+  }
+}
+
+// Function to generate avatar color based on student name
+const getAvatarColor = (name) => {
+  if (!name) return '#3b82f6'
+
+  // Generate a consistent color based on the name
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+
+  // Convert to hex color
+  const colors = [
+    '#3b82f6', // blue
+    '#10b981', // green
+    '#f59e0b', // amber
+    '#ef4444', // red
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#f97316', // orange
+    '#14b8a6', // teal
+    '#6366f1'  // indigo
+  ]
+
+  return colors[Math.abs(hash) % colors.length]
+}
+
+// Function to get initials from name
+const getInitials = (name) => {
+  if (!name) return '?'
+  return name.charAt(0)
+}
+
+// 显示添加学生弹窗
+const showAddStudentsModal = async () => {
+  if (!selectedClass.value) {
+    showNotification('请先选择一个课程', 'error')
+    return
+  }
+
+  addStudentTab.value = 'class'
+  selectedClassName.value = ''
+  previewStudents.value = []
+  manualStudentId.value = ''
+  manualStudentInfo.value = null
+  showAddStudentModal.value = true
+
+  // 获取可用班级列表
+  await getClassNames()
+}
+
+// 获取班级名称列表
+const getClassNames = async () => {
+  try {
+    isLoadingClassNames.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/student/classnames', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取班级列表失败')
+    }
+
+    const data = await res.json()
+    if (data.data && Array.isArray(data.data)) {
+      classNameList.value = data.data
+    } else {
+      classNameList.value = []
+    }
+  } catch (error) {
+    console.error('获取班级列表失败:', error)
+    showNotification('获取班级列表失败', 'error')
+  } finally {
+    isLoadingClassNames.value = false
+  }
+}
+
+// 关闭添加学生弹窗
+const closeAddStudentModal = () => {
+  showAddStudentModal.value = false
+}
+
+// 监听班级选择变化，加载预览学生列表
+watch(selectedClassName, async (newVal) => {
+  if (!newVal) {
+    previewStudents.value = []
+    return
+  }
+
+  await getPreviewStudents(newVal)
+})
+
+// 获取预览学生列表
+const getPreviewStudents = async (className) => {
+  if (!className) return
+
+  try {
+    isLoadingPreviewStudents.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/system/student/byclass/${encodeURIComponent(className)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取班级学生列表失败')
+    }
+
+    const data = await res.json()
+    // 修改这里：从data.rows改为data.data
+    if (data.data && Array.isArray(data.data)) {
+      previewStudents.value = data.data
+    } else {
+      previewStudents.value = []
+    }
+  } catch (error) {
+    console.error('获取班级学生列表失败:', error)
+    showNotification('获取班级学生列表失败', 'error')
+  } finally {
+    isLoadingPreviewStudents.value = false
+  }
+}
+
+
+// 监听手动输入学号变化，查询学生信息
+watch(manualStudentId, async (newVal) => {
+  if (!newVal || newVal.length < 3) {
+    manualStudentInfo.value = null
+    return
+  }
+
+  // 使用防抖，避免频繁请求
+  clearTimeout(studentSearchTimeout)
+  studentSearchTimeout = setTimeout(() => {
+    searchStudentById(newVal)
+  }, 500)
+})
+
+let studentSearchTimeout = null
+
+// 根据学号查询学生
+const searchStudentById = async (studentId) => {
+  try {
+    isSearchingStudent.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/system/student/${studentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('查询学生信息失败')
+    }
+
+    const data = await res.json()
+    if (data.code === 200 && data.data) {
+      manualStudentInfo.value = data.data
+    } else {
+      manualStudentInfo.value = null
+    }
+  } catch (error) {
+    console.error('查询学生信息失败:', error)
+    manualStudentInfo.value = null
+  } finally {
+    isSearchingStudent.value = false
+  }
+}
+
+// 确认添加学生
+const confirmAddStudents = async () => {
+  if (!selectedClass.value) {
+    showNotification('请先选择一个课程', 'error')
+    return
+  }
+
+  try {
+    isAddingStudents.value = true
+    const token = localStorage.getItem('token')
+    let studentIds = []
+
+    if (addStudentTab.value === 'class') {
+      // 按班级添加学生
+      if (!selectedClassName.value || previewStudents.value.length === 0) {
+        showNotification('请选择有效的班级', 'error')
+        return
+      }
+
+      studentIds = previewStudents.value.map(student => student.studentId)
+    } else {
+      // 手动添加单个学生
+      if (!manualStudentInfo.value) {
+        showNotification('请输入有效的学生学号', 'error')
+        return
+      }
+
+      studentIds = [manualStudentInfo.value.studentId]
+    }
+
+    const res = await fetch('/dev-api/system/class/students/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        classId: selectedClass.value.classId,
+        studentIds: studentIds
+      })
+    })
+
+    if (!res.ok) {
+      throw new Error('添加学生失败')
+    }
+
+    const data = await res.json()
+    if (data.code === 200) {
+      showNotification('添加学生成功', 'success')
+      closeAddStudentModal()
+      // 刷新学生列表
+      await getClassStudents(selectedClass.value.classId)
+    } else {
+      throw new Error(data.msg || '添加学生失败')
+    }
+  } catch (error) {
+    console.error('添加学生失败:', error)
+    showNotification(`添加学生失败: ${error.message}`, 'error')
+  } finally {
+    isAddingStudents.value = false
+  }
 }
 
 // 添加文档
@@ -800,6 +1846,108 @@ const confirmDeleteDocument = (id, name) => {
   showDeleteConfirm.value = true;
 }
 
+
+// 显示创建课程表单
+const showCreateClassForm = () => {
+  // 获取课组列表
+  getKzList()
+  showClassForm.value = true
+}
+
+// 关闭创建课程表单
+const closeClassForm = () => {
+  showClassForm.value = false
+}
+
+// 重置课程表单
+const resetClassForm = () => {
+  newClass.value = {
+    className: '',
+    kzId: '',
+    teacherId: userInfo.value?.userId || '',
+    status: '0'
+  }
+}
+
+// 关闭课程管理弹窗
+const closeClassModal = () => {
+  showClassModal.value = false
+  closeClassForm()
+}
+
+// 获取课组列表
+const getKzList = async () => {
+  try {
+    isLoadingKzList.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/kz/list', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取课组列表失败')
+    }
+
+    const data = await res.json()
+    if (data.rows && Array.isArray(data.rows)) {
+      kzList.value = data.rows
+    } else {
+      kzList.value = []
+    }
+  } catch (error) {
+    console.error('获取课组列表失败:', error)
+    showNotification('获取课组列表失败', 'error')
+  } finally {
+    isLoadingKzList.value = false
+  }
+}
+
+
+// 提交创建课程
+const submitCreateClass = async () => {
+  if (!newClass.value.className || !newClass.value.kzId) {
+    showNotification('请填写完整的课程信息', 'error')
+    return
+  }
+
+  try {
+    isCreatingClass.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/class', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(newClass.value)
+    })
+
+    if (!res.ok) {
+      throw new Error('创建课程失败')
+    }
+
+    const result = await res.json()
+    if (result.code === 200) {
+      showNotification('课程创建成功', 'success')
+      resetClassForm()
+      closeClassForm()
+      await getClassList() // 刷新课程列表
+    } else {
+      throw new Error(result.msg || '创建课程失败')
+    }
+  } catch (error) {
+    console.error('创建课程失败:', error)
+    showNotification(`创建课程失败: ${error.message}`, 'error')
+  } finally {
+    isCreatingClass.value = false
+  }
+}
 
 const scrollToBottom = async () => {
   await nextTick()
@@ -1342,15 +2490,7 @@ const showNotification = (message, type = 'info') => {
   }, 3000)
 }
 
-// 打开知识库弹窗
-const openKnowledgeModal = async (kbs) => {
-  if (kbs && Array.isArray(kbs)) {
-    knowledgeBases.value = kbs;
-  } else {
-    await getKnowledgeBases();
-  }
-  showKnowledgeModal.value = true;
-}
+
 
 // 关闭知识库弹窗
 const closeKnowledgeModal = () => {
@@ -1403,7 +2543,7 @@ const submitCreateKnowledgeBase = async () => {
       permission: 'all_team_members'
     });
 
-    if (res.code === 200) {
+    if (res) {
       showNotification('创建知识库成功', 'success');
       await getKnowledgeBases();
       closeCreateKBModal();
@@ -1687,46 +2827,6 @@ const confirmDelete = async () => {
   }
 }
 
-// Knowledge base methods
-const handleCreateKnowledgeBase = async (name) => {
-  try {
-    const res = await chatAPI.dataset.create({
-      name: name,
-      description: '',
-      indexing_technique: 'economy',
-      permission: 'all_team_members'
-    })
-
-    if (res.code === 200) {
-      showNotification('知识库创建成功', 'success');
-      await getKnowledgeBases();
-    }
-  } catch (error) {
-    console.error('Failed to create knowledge base:', error);
-    showNotification('知识库创建失败', 'error');
-  }
-}
-
-const handleFileChange = async (file, datasetId) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file.raw);
-    formData.append('datasetId', datasetId);
-
-    // 实现文件上传逻辑
-    showNotification('文件上传中...', 'info');
-
-    // 模拟上传成功
-    setTimeout(() => {
-      showNotification('文件上传成功', 'success');
-      getKnowledgeBases();
-    }, 1500);
-  } catch (error) {
-    console.error('File upload failed:', error);
-    showNotification('文件上传失败', 'error');
-  }
-}
-
 const getUserInfo = async () => {
   try {
     // Get user info from localStorage or API
@@ -1792,22 +2892,22 @@ watch(inputMessage, () => {
   });
 });
 
-// Component lifecycle
+// 组件生命周期
 onMounted(async () => {
-  // Get user info
+  // 获取用户信息
   await getUserInfo();
 
-  // Get conversations
+  // 获取对话历史
   await getConversations();
 
-  // Default to new chat
+  // 默认新对话
   currentConversation.value = null;
   messages.value = [];
 
-  // Initialize auto-resize for textarea
+  // 初始化自动调整文本框大小
   autoResize();
 
-  // Add animation class after mount
+  // 添加挂载后动画
   nextTick(() => {
     document.querySelector('.sidebar').classList.add('slide-in');
     document.querySelector('.chat-main').classList.add('fade-in');
@@ -1818,1443 +2918,4 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-/* Base styles */
-.chat-container {
-  display: flex;
-  height: 100vh;
-  width: 100%;
-  background-color: #f9fafb;
-  color: #111827;
-  overflow: hidden;
-}
-
-/* Dark mode styles */
-.dark {
-  background-color: #111827;
-  color: #f9fafb;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 280px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transform: translateX(-100%);
-  opacity: 0;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
-  z-index: 10;
-}
-
-.dark .sidebar {
-  background-color: #1f2937;
-  border-right-color: #374151;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.sidebar.slide-in {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  padding: 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-}
-
-.dark .user-profile {
-  border-bottom-color: #374151;
-  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 0.75rem;
-  overflow: hidden;
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-}
-
-.user-name {
-  font-weight: 600;
-  font-size: 0.9375rem;
-}
-
-.dark .user-name {
-  color: #f3f4f6;
-}
-
-.sidebar-actions {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sidebar-section {
-  padding: 0 1rem;
-  margin-bottom: 1rem;
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.section-title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dark .section-title {
-  color: #9ca3af;
-}
-
-.sidebar-footer {
-  padding: 1rem;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.dark .sidebar-footer {
-  border-top-color: #374151;
-}
-
-.logout-btn {
-  margin-top: 0.5rem;
-}
-
-/* Main chat area */
-.chat-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-
-.dark .chat-main {
-  background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
-}
-
-.chat-main.fade-in {
-  opacity: 1;
-}
-
-.messages-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.5rem;
-  scroll-behavior: smooth;
-}
-
-.message {
-  margin-bottom: 1.5rem;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.message-bubble {
-  padding: 0.875rem 1rem;
-  border-radius: 0.75rem;
-  max-width: 80%;
-  word-break: break-word;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.message-bubble:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.message.user {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.message-bubble.user {
-  background: linear-gradient(135deg, #79a2ea 0%, #175bef 100%);
-  color: white;
-  border-radius: 0.75rem 0.75rem 0 0.75rem;
-}
-
-.message-bubble.assistant {
-  background: linear-gradient(135deg, #eeeef3 0%, #ffffff 100%);
-  border-radius: 0.75rem 0.75rem 0.75rem 0;
-  border: 1px solid #e5e7eb;
-}
-
-.dark .message-bubble.assistant {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  border-color: #374151;
-  color: #f3f4f6;
-}
-
-.message-time {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin-top: 0.25rem;
-}
-
-.message-files {
-  margin-top: 0.5rem;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  margin-top: 0.25rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  backdrop-filter: blur(4px);
-}
-
-.thinking-process {
-  margin-bottom: 0.75rem;
-}
-
-.thinking-process details {
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.dark .thinking-process details {
-  background-color: #1f2937;
-}
-
-.thinking-process details:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.thinking-process summary {
-  padding: 0.625rem 0.875rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #4b5563;
-  user-select: none;
-}
-
-.dark .thinking-process summary {
-  color: #d1d5db;
-}
-
-.thinking-process summary .arrow {
-  margin-left: auto;
-  transition: transform 0.3s ease;
-}
-
-.thinking-process details[open] summary .arrow {
-  transform: rotate(180deg);
-}
-
-.thinking-content {
-  padding: 0.875rem;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #4b5563;
-  background-color: #f3f4f6;
-  border-top: 1px solid #e5e7eb;
-  animation: slideDown 0.3s ease;
-}
-
-.dark .thinking-content {
-  color: #d1d5db;
-  background-color: #111827;
-  border-top-color: #374151;
-}
-
-.message-content {
-  line-height: 1.5;
-}
-
-/* 代码块样式 */
-:deep(.code-block-wrapper) {
-  margin: 0rem 0;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background-color: rgb(9, 28, 35);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-:deep(.code-header) {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background-color: rgb(9, 28, 35);
-  border-bottom: 1px solid #fffdfd;
-}
-
-:deep(.code-language) {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-:deep(.code-copy-btn) {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  background-color: #3b3b3b;
-  color: #e5e7eb;
-  font-size: 0.75rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-:deep(.code-copy-btn:hover) {
-  background-color: #4b4b4b;
-}
-
-:deep(.hljs) {
-  padding: 1rem;
-  border-radius: 0;
-  background-color: rgba(12, 50, 64, 0);
-  font-family: 'Fira Code', monospace;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  overflow-x: auto;
-}
-
-.message-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.message-bubble:hover .message-actions {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.suggested-questions {
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.suggestions-title {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-}
-
-.suggestions-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.suggestion-button {
-  background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.8125rem;
-  color: #4b5563;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  animation: fadeIn 0.5s ease forwards;
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.suggestion-button:nth-child(1) { animation-delay: 0.1s; }
-.suggestion-button:nth-child(2) { animation-delay: 0.2s; }
-.suggestion-button:nth-child(3) { animation-delay: 0.3s; }
-.suggestion-button:nth-child(4) { animation-delay: 0.4s; }
-
-.suggestion-button:hover {
-  background-color: #e5e7eb;
-  transform: translateY(-2px);
-}
-
-/* Input area */
-.input-container {
-  padding: 1rem;
-  border-top: 1px solid #e5e7eb;
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-}
-
-.input-wrapper {
-  display: flex;
-  align-items: flex-end;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 0.625rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.input-wrapper:focus-within {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
-}
-
-.message-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  resize: none;
-  padding: 0.5rem;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  max-height: 150px;
-  background-color: transparent;
-  transition: all 0.3s ease;
-}
-
-.input-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.uploaded-files {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.uploaded-file {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  background-color: #f3f4f6;
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.375rem;
-  font-size: 0.8125rem;
-  animation: fadeIn 0.3s ease;
-  transition: all 0.3s ease;
-}
-
-.uploaded-file:hover {
-  background-color: #e5e7eb;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.125rem;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.remove-file:hover {
-  color: #ef4444;
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-.hidden-input {
-  display: none;
-}
-
-/* Buttons */
-.action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  color: #4b5563;
-  position: relative;
-  overflow: hidden;
-}
-
-.action-button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.5);
-  opacity: 0;
-  border-radius: 100%;
-  transform: scale(1, 1) translate(-50%, -50%);
-  transform-origin: 50% 50%;
-}
-
-.action-button:active::after {
-  animation: ripple 0.6s ease-out;
-}
-
-.action-button:hover {
-  background-color: #f3f4f6;
-  transform: translateY(-2px);
-}
-
-.action-button.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border-color: transparent;
-}
-
-.action-button.primary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
-}
-
-.action-button.danger {
-  color: #ef4444;
-  border-color: #fecaca;
-}
-
-.action-button.danger:hover {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
-.action-button.small {
-  padding: 0.375rem 0.625rem;
-  font-size: 0.75rem;
-}
-
-.action-button.icon-only {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-}
-
-/* Theme toggle */
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1rem;
-}
-
-.toggle-track {
-  position: relative;
-  width: 40px;
-  height: 20px;
-  background-color: #e5e7eb;
-  border-radius: 10px;
-  margin-right: 0.5rem;
-  transition: background-color 0.3s ease;
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background-color: white;
-  border-radius: 50%;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toggle-thumb.active {
-  transform: translateX(20px);
-  background-color: #3b82f6;
-}
-
-/* Typing indicator */
-.typing-indicator {
-  display: inline-flex;
-  align-items: center;
-  background-color: #f3f4f6;
-  padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  margin-bottom: 1rem;
-  animation: fadeIn 0.5s ease;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  margin: 0 2px;
-  background-color: #9ca3af;
-  border-radius: 50%;
-  animation: bounce 1.5s infinite;
-}
-
-.dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-/* Tooltip */
-.tooltip-wrapper {
-  position: relative;
-}
-
-.tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background-color: #1f2937;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  pointer-events: none;
-  margin-bottom: 5px;
-}
-
-.tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 5px;
-  border-style: solid;
-  border-color: #1f2937 transparent transparent transparent;
-}
-
-.tooltip-wrapper:hover .tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* 知识库弹窗样式 */
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  z-index: 100;
-}
-
-.modal-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 800px;
-  max-height: 80vh;
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  z-index: 101;
-  display: flex;
-  flex-direction: column;
-  animation: modalFadeIn 0.3s ease;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background-color: #f3f4f6;
-  color: #111827;
-}
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-/* 知识库列表样式 */
-.knowledge-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.knowledge-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
-}
-
-.knowledge-item:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-
-.knowledge-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
-}
-
-.knowledge-name {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #111827;
-}
-
-.knowledge-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.description {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.stats {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.document-count, .word-count {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-  background-color: #f3f4f6;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-}
-
-.knowledge-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.delete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  background-color: #fee2e2;
-  color: #ef4444;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.delete-btn:hover {
-  background-color: #fecaca;
-}
-
-/* 表单样式 */
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.form-input, .form-textarea {
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.form-input:focus, .form-textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.form-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-/* 添加文档样式 */
-.add-doc-tabs {
-  display: flex;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 1.5rem;
-}
-
-.tab-button {
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tab-button.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
-}
-
-.tab-button:hover {
-  color: #4b5563;
-}
-
-.file-upload-area {
-  border: 2px dashed #d1d5db;
-  border-radius: 0.5rem;
-  padding: 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.file-upload-area:hover {
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
-}
-
-.upload-hint {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
-}
-
-.selected-file {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background-color: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.file-name {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.file-size {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-/* 文档列表样式 */
-.documents-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.document-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
-}
-
-.document-item:hover {
-  background-color: #f3f4f6;
-}
-
-.document-info {
-  flex: 1;
-}
-
-.document-name {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.document-details {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.document-date, .document-word-count {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.document-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* 文档内容样式 */
-.document-content {
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.document-content pre {
-  white-space: pre-wrap;
-  font-family: inherit;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-/* 删除确认样式 */
-.delete-warning {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.delete-warning svg {
-  color: #ef4444;
-}
-
-.warning-text {
-  color: #ef4444;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-}
-
-/* 空状态样式 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  text-align: center;
-  color: #6b7280;
-}
-
-.empty-state svg {
-  margin-bottom: 1rem;
-  color: #9ca3af;
-}
-
-/* 加载状态 */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-}
-
-.loading-spinner {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 3px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-/* 通知样式 */
-.notification {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  animation: slideIn 0.3s ease;
-  max-width: 24rem;
-}
-
-.notification.success {
-  border-left: 4px solid #10b981;
-}
-
-.notification.error {
-  border-left: 4px solid #ef4444;
-}
-
-.notification.info {
-  border-left: 4px solid #3b82f6;
-}
-
-.notification-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notification.success .notification-icon {
-  color: #10b981;
-}
-
-.notification.error .notification-icon {
-  color: #ef4444;
-}
-
-.notification.info .notification-icon {
-  color: #3b82f6;
-}
-
-.notification-content {
-  flex: 1;
-  font-size: 0.875rem;
-}
-
-/* 复制成功提示 */
-.copy-success-notification {
-  position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  background-color: #10b981;
-  color: white;
-  font-size: 0.875rem;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-  z-index: 1000;
-  animation: fadeInDown 0.3s ease;
-}
-
-/* 分页样式 */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1.5rem;
-  gap: 1rem;
-}
-
-.pagination-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pagination-button:hover:not(:disabled) {
-  background-color: #e5e7eb;
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-/* 深色模式分页样式 */
-.dark .pagination-button {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
-}
-
-.dark .pagination-button:hover:not(:disabled) {
-  background-color: #4b5563;
-}
-
-.dark .pagination-info {
-  color: #9ca3af;
-}
-
-/* 动画 */
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -48%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(0, 0);
-    opacity: 0.5;
-  }
-  20% {
-    transform: scale(25, 25);
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(40, 40);
-  }
-}
-
-/* Transition groups */
-.message-fade-enter-active, .message-fade-leave-active {
-  transition: all 0.5s ease;
-}
-
-.message-fade-enter-from, .message-fade-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-.slide-up-enter-active, .slide-up-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-up-enter-from, .slide-up-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-/* 深色模式 */
-.dark .modal-container {
-  background-color: #1f2937;
-  color: #f9fafb;
-}
-
-.dark .modal-header,
-.dark .modal-footer {
-  border-color: #374151;
-}
-
-.dark .close-button {
-  color: #9ca3af;
-}
-
-.dark .close-button:hover {
-  background-color: #374151;
-  color: #f9fafb;
-}
-
-.dark .knowledge-item {
-  background-color: #111827;
-  border-color: #374151;
-}
-
-.dark .knowledge-name {
-  color: #f9fafb;
-}
-
-.dark .description {
-  color: #9ca3af;
-}
-
-.dark .document-count,
-.dark .word-count {
-  background-color: #374151;
-  color: #d1d5db;
-}
-
-.dark .form-input,
-.dark .form-textarea {
-  background-color: #1f2937;
-  border-color: #4b5563;
-  color: #f9fafb;
-}
-
-.dark .form-input:focus,
-.dark .form-textarea:focus {
-  border-color: #eceef3;
-}
-
-.dark .form-group label {
-  color: #d1d5db;
-}
-
-.dark .file-upload-area {
-  border-color: #4b5563;
-}
-
-.dark .file-upload-area:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-}
-
-.dark .selected-file,
-.dark .document-item,
-.dark .document-content {
-  background-color: #111827;
-  border-color: #374151;
-}
-
-.dark .notification {
-  background-color: #1f2937;
-  color: #f9fafb;
-}
-
-.dark .tab-button {
-  color: #9ca3af;
-}
-
-.dark .tab-button.active {
-  color: #3b82f6;
-}
-
-.dark .tab-button:hover {
-  color: #d1d5db;
-}
-
-.dark :deep(.code-block-wrapper) {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.dark :deep(.code-header) {
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #2a2a2a;
-}
-
-.dark :deep(.code-copy-btn) {
-  background-color: #2a2a2a;
-  color: #d1d5db;
-}
-
-.dark :deep(.code-copy-btn:hover) {
-  background-color: #3a3a3a;
-}
-
-/* 响应式样式 */
-@media (max-width: 768px) {
-  .modal-container {
-    width: 95%;
-    max-height: 85vh;
-  }
-
-  .knowledge-item,
-  .document-item {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .knowledge-actions,
-  .document-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-</style>
+<style src="./Chat.css" scoped></style>
