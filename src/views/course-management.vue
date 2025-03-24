@@ -154,7 +154,7 @@
 import { ref } from 'vue';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard.vue';
 import {
-  DataAnalysis, Grid, UserPlus, UserRemove,
+  UserPlus, UserRemove,
   Document, Plus
 } from '@element-plus/icons-vue';
 
@@ -230,10 +230,6 @@ function showAddStudentsModal() {
 
 function toggleSelectAllStudents() {
   emit('toggle-select-all-students');
-}
-
-function toggleStudentSelection(studentId) {
-  emit('toggle-student-selection', studentId);
 }
 
 function batchRemoveStudents() {

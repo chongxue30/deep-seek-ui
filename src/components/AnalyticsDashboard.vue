@@ -398,13 +398,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import * as echarts from 'echarts';
-import CountTo from 'vue-count-to';
-import { ElMessage, ElNotification, ElMessageBox } from 'element-plus';
+import { ElMessage, ElNotification} from 'element-plus';
 import {
-  DataAnalysis, User, Setting, Refresh, Operation, More, Download,
+  DataAnalysis, User, Setting, Refresh, More, Download,
   QuestionFilled, CaretTop, CaretBottom, Minus, PieChart, FullScreen,
-  TrendCharts, Collection, ChatDotRound, Search, Calendar, WarningFilled,
-  Reading, Cpu, DataLine
+  TrendCharts, Collection, ChatDotRound, Search, Calendar, WarningFilled
 } from '@element-plus/icons-vue';
 import {
   getStatistics,
@@ -455,7 +453,6 @@ const charts = reactive({
   studentComplexityChart: null,
   sparklines: []
 });
-const processingHistory = ref(false);
 const isLoading = ref(false);
 const isFullscreenLoading = ref(false);
 const showStudentSearch = ref(false);
@@ -989,7 +986,7 @@ function initQuestionTypeChart() {
         })),
         animationType: 'scale',
         animationEasing: 'elasticOut',
-        animationDelay: function(idx) {
+        animationDelay: function() {
           return Math.random() * 200;
         }
       }
@@ -1189,7 +1186,7 @@ function initComplexityChart() {
         },
         animationType: 'scale',
         animationEasing: 'elasticOut',
-        animationDelay: function(idx) {
+        animationDelay: function() {
           return Math.random() * 200;
         }
       }
@@ -1415,7 +1412,7 @@ function initStudentComplexityChart() {
         ],
         animationType: 'scale',
         animationEasing: 'elasticOut',
-        animationDelay: function(idx) {
+        animationDelay: function() {
           return Math.random() * 200;
         }
       }

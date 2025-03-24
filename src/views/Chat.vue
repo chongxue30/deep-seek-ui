@@ -2167,13 +2167,6 @@ const getDocuments = async (datasetId) => {
   }
 }
 
-// 切换页码
-const changePage = (page) => {
-  if (page < 1 || page > totalPages.value) return;
-  currentPage.value = page;
-  getDocuments(currentKnowledgeBase.value.id);
-}
-
 // 显示文档列表弹窗 - 重置分页
 const showDocumentsModal = async (kb) => {
   currentKnowledgeBase.value = kb;
