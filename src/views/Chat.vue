@@ -17,6 +17,8 @@
             </div>
             <!-- Teacher badge -->
             <div v-if="isTeacher" class="teacher-badge">教师</div>
+            <!-- 学生标识 -->
+            <div v-if="isStudent" class="student-badge">学生</div>
           </div>
         </div>
 
@@ -27,6 +29,14 @@
             <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           </span>
           <span class="toggle-text">{{ isAdminMode ? '返回聊天' : '工作台' }}</span>
+        </button>
+
+        <!-- 学生切换班级按钮 -->
+        <button v-if="isStudent" class="management-toggle-btn" @click="goToCourseSelection">
+      <span class="toggle-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+      </span>
+          <span class="toggle-text">切换班级</span>
         </button>
       </div>
 
@@ -1346,7 +1356,20 @@ const isTeacher = computed(() => {
   return userInfo.value.roles.some(role => role.roleKey === 'tea');
 });
 
+// 添加一个计算属性来判断用户是否为学生
+const isStudent = computed(() => {
+  if (!userInfo.value || !userInfo.value.roles || !Array.isArray(userInfo.value.roles)) {
+    return false;
+  }
 
+  // 检查roles数组中是否有对象的roleKey属性是'stu'
+  return userInfo.value.roles.some(role => role.roleKey === 'stu');
+});
+
+// 添加切换班级方法
+const goToCourseSelection = () => {
+  router.push('/course-selection');
+};
 
 // 创建知识库
 const showCreateKnowledgeBaseModal = () => {
@@ -2248,25 +2271,40 @@ const sendMessage = async () => {
 
   try {
     const token = localStorage.getItem('token');
+    // 从 localStorage 获取选择的课程 ID
+    const selectedCourseId = localStorage.getItem('selectedCourseId');
+
+    // 如果没有选择课程 ID 且用户是学生，显示错误并重定向
+    if (!selectedCourseId) {
+      const userInfoStr = localStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        const isStudent = userInfo.roles?.some(role => role.roleKey === 'stu');
+
+        if (isStudent) {
+          throw new Error('请先选择一个课程');
+        }
+      }
+    }
+
     // Create POST request - using original API path
     const response = await fetch('http://10.131.149.41:8080/deepSeek/sendMessage', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' ,
-        'Authorization': `Bearer ${token}`},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         query: currentInput,
         conversationId: currentConversation.value?.id || '',
         user: userInfo.value.userName,
-        responseMode: "streaming"
+        responseMode: "streaming",
+        classId: selectedCourseId // 使用从 localStorage 获取的课程 ID
       })
     });
-    // const response = await chatAPI.sendMessage({
-    //   query: currentInput,
-    //   conversationId: currentConversation.value?.id || '',
-    //   user: userInfo.value.userName,
-    //   responseMode: "streaming"
-    // });
-    console.log(response)
+
+    // 其余代码保持不变...
+
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status}`);
     }
@@ -2354,6 +2392,12 @@ const sendMessage = async () => {
 
     // If request failed, remove AI message
     messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
+
+    // 如果错误是关于课程选择，重定向到课程选择页面
+    if (error.message.includes('请先选择一个课程')) {
+      alert('请先选择一个课程');
+      router.push('/course-selection');
+    }
   }
 };
 
@@ -2889,6 +2933,22 @@ watch(inputMessage, () => {
 onMounted(async () => {
   // 获取用户信息
   await getUserInfo();
+
+  // 检查学生是否已选择课程
+  const userInfoStr = localStorage.getItem('userInfo');
+  if (userInfoStr) {
+    const userInfo = JSON.parse(userInfoStr);
+    const isStudent = userInfo.roles?.some(role => role.roleKey === 'stu');
+
+    if (isStudent) {
+      const selectedCourseId = localStorage.getItem('selectedCourseId');
+      if (!selectedCourseId) {
+        // 如果学生未选择课程，重定向到课程选择页面
+        router.push('/course-selection');
+        return;
+      }
+    }
+  }
 
   // 获取对话历史
   await getConversations();

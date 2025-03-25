@@ -2116,7 +2116,7 @@ select.form-input {
 .management-toggle-btn {
   position: absolute;
   top: 1.25rem;
-  right: 1.25rem;
+  right: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -3504,4 +3504,14 @@ select.form-input {
     height: 2rem;
     font-size: 0.875rem;
   }
+}
+
+/* 添加学生标识样式 */
+.student-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.25rem;
+  font-weight: 500;
 }
