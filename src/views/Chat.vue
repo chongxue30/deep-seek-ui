@@ -1527,6 +1527,60 @@ const toggleSelectAllStudents = () => {
   selectAllStudents.value = !selectAllStudents.value
 }
 
+// 批量移除学生
+const batchRemoveStudents = async () => {
+  if (selectedStudents.value.length === 0) {
+    showNotification('请先选择要移除的学生', 'error');
+    return;
+  }
+
+  const confirmMessage = `确定要将选中的 ${selectedStudents.value.length} 名学生从课程中移除吗？`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    // 添加这个状态变量的定义（如果尚未定义）
+    const isRemovingStudents = ref(false);
+    isRemovingStudents.value = true;
+
+    const token = localStorage.getItem('token');
+
+    const res = await fetch('/dev-api/system/class/students/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        classId: selectedClass.value.classId,
+        studentIds: selectedStudents.value
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error('批量移除学生失败');
+    }
+
+    const data = await res.json();
+    if (data.code === 200) {
+      showNotification('批量移除学生成功', 'success');
+      // 重置选择
+      selectedStudents.value = [];
+      selectAllStudents.value = false;
+      // 刷新学生列表
+      await getClassStudents(selectedClass.value.classId);
+    } else {
+      throw new Error(data.msg || '批量移除学生失败');
+    }
+  } catch (error) {
+    console.error('批量移除学生失败:', error);
+    showNotification(`批量移除学生失败: ${error.message}`, 'error');
+  } finally {
+    isRemovingStudents.value = false;
+  }
+};
+
 // Update the removeStudentFromClass function to handle multiple students
 const removeStudentFromClass = async (student) => {
   // If a specific student is provided, just remove that one

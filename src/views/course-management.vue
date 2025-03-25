@@ -228,6 +228,11 @@ function showAddStudentsModal() {
   emit('show-add-students-modal');
 }
 
+// 添加此函数处理学生选择
+function updateSelectedStudents(studentId, selected) {
+  emit('toggle-student-selection', studentId, selected);
+}
+
 function toggleSelectAllStudents() {
   emit('toggle-select-all-students');
 }
