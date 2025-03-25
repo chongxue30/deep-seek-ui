@@ -763,13 +763,13 @@ function getDashboardData() {
 
   // 使用Promise.all并行获取所有数据
   Promise.all([
-    getStatistics(),
-    getQuestionTypes(),
-    getSubjects(),
-    getComplexityDistribution(),
-    getDailyTrend(),
-    getHotKeywords(),
-    getActiveStudents()
+    getStatistics(props.classId),
+    getQuestionTypes(props.classId),
+    getSubjects(props.classId),
+    getComplexityDistribution(props.classId),
+    getDailyTrend(props.classId),
+    getHotKeywords(props.classId),
+    getActiveStudents(props.classId)
   ]).then(([statsRes, questionTypesRes, subjectsRes, complexityRes, dailyTrendRes, hotKeywordsRes, activeStudentsRes]) => {
     if (statsRes.code === 200) statistics.value = statsRes.data || {
       totalQuestions: 0,
