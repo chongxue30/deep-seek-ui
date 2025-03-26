@@ -20,7 +20,7 @@ export const chatAPI = {
 
   // 发送对话消息
   sendMessage: (data) => {
-    return fetch('http://http://10.131.149.41:8080/deepSeek/sendMessage', {
+    return fetch('http://https://chat.imutoj.cn/dev-api/deepSeek/sendMessage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' ,
         'Authorization': `Bearer ${token}`},

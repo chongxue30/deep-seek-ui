@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://10.131.149.41:8080',
+        target: 'https://chat.imutoj.cn/dev-api/',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

@@ -147,7 +147,7 @@ export function useDocuments() {
                     formData.append('data', processData)
 
                     // Send request to backend API
-                    const response = await fetch('http://10.131.149.41:8080/document/createByFile', {
+                    const response = await fetch('https://chat.imutoj.cn/dev-api/document/createByFile', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -173,7 +173,7 @@ export function useDocuments() {
             } else {
                 // Manually create text document
                 const token = localStorage.getItem('token')
-                const res = await fetch('http://10.131.149.41:8080/document/create', {
+                const res = await fetch('https://chat.imutoj.cn/dev-api/document/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
