@@ -26,14 +26,14 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>数据分析</span>
         </div>
-        <div class="tab">
-          <el-icon><User /></el-icon>
-          <span>学生管理</span>
-        </div>
-        <div class="tab">
-          <el-icon><Setting /></el-icon>
-          <span>系统设置</span>
-        </div>
+<!--        <div class="tab">-->
+<!--          <el-icon><User /></el-icon>-->
+<!--          <span>学生管理</span>-->
+<!--        </div>-->
+<!--        <div class="tab">-->
+<!--          <el-icon><Setting /></el-icon>-->
+<!--          <span>系统设置</span>-->
+<!--        </div>-->
       </div>
       <div class="header-actions">
         <el-tooltip content="刷新数据" placement="bottom">
@@ -153,13 +153,13 @@
           <div class="dashboard-panel trend-panel">
             <div class="panel-header">
               <h3><el-icon><TrendCharts /></el-icon> 提问趋势分析</h3>
-              <div class="panel-actions">
-                <el-radio-group v-model="trendTimeRange" size="small">
-                  <el-radio-button label="7">7天</el-radio-button>
-                  <el-radio-button label="14">14天</el-radio-button>
-                  <el-radio-button label="30">30天</el-radio-button>
-                </el-radio-group>
-              </div>
+<!--              <div class="panel-actions">-->
+<!--                <el-radio-group v-model="trendTimeRange" size="small">-->
+<!--                  <el-radio-button label="7">7天</el-radio-button>-->
+<!--                  <el-radio-button label="14">14天</el-radio-button>-->
+<!--                  <el-radio-button label="30">30天</el-radio-button>-->
+<!--                </el-radio-group>-->
+<!--              </div>-->
             </div>
             <div class="panel-body">
               <div ref="dailyTrendChartRef" class="chart-container"></div>

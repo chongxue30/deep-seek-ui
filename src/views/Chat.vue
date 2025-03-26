@@ -1407,12 +1407,18 @@ const getClassList = async () => {
   try {
     const token = localStorage.getItem('token')
 
-    const res = await fetch('/dev-api/system/class/list', {
-      method: 'GET',
+    const userId = userInfo.value?.userId || ''
+
+    // Changed to POST method with userId in request body
+    const res = await fetch('/dev-api/system/class/listByTeacherId', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-      }
+      },
+      body: JSON.stringify({
+        teacherId: userId
+      })
     })
 
     if (!res.ok) {
@@ -1926,6 +1932,8 @@ const confirmDeleteDocument = (id, name) => {
 
 // 显示创建课程表单
 const showCreateClassForm = () => {
+  // 首先重置表单，确保teacherId被正确设置
+  resetClassForm()
   // 获取课组列表
   getKzList()
   showClassForm.value = true

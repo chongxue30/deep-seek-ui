@@ -12,7 +12,7 @@
 
       <!-- 切换显示仪表盘或学生列表 -->
       <div v-if="showDashboard" class="dashboard-view">
-        <AnalyticsDashboard :classId="selectedClass.classId" />
+        <AnalyticsDashboard :classId="selectedClass.classId" class="analytics-dashboard"/>
       </div>
       <div v-else class="student-list-view">
         <!-- 原有的学生列表内容 -->
@@ -460,6 +460,27 @@ function getInitials(name) {
   display: flex;
   justify-content: center;
   margin-top: 20px;
+}
+
+.dashboard-view, .student-list-view {
+  height: calc(100vh - 200px);
+  overflow: auto;
+  position: relative;
+  width: 100%;
+}
+
+.analytics-dashboard-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.analytics-dashboard {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  flex: 1;
 }
 </style>
 
