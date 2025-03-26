@@ -306,7 +306,7 @@ function getInitials(name) {
   font-weight: 600;
 }
 
-.dashboard-view {
+.dashboard-view, .student-list-view {
   height: calc(100vh - 200px);
   overflow: auto;
 }
