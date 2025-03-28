@@ -22,6 +22,12 @@ const routes = [
     name: 'CourseSelection',
     component: () => import('../views/CourseSelection.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/course/:id',
+    name: 'CourseDetail',
+    component: () => import('../views/CourseDetail.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
