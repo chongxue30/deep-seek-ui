@@ -23,9 +23,10 @@
   border-right: 1px solid #e5e7eb;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transform: translateX(-100%);
-  opacity: 0;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+  /*transform: translateX(-100%);*/
+  /*opacity: 0;*/
+  /*transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;*/
+  transition: all 0.3s ease; /* 简化过渡效果 */
   z-index: 10;
 }
 
@@ -3753,7 +3754,8 @@ select.form-input {
 
 /* 改进的折叠侧边栏样式 */
 .sidebar.collapsed {
-  width: 150px; /* 稍窄一些 */
+  /*width: 150px; */
+  /* 稍窄一些 */
   overflow: visible;
   display: flex;
   flex-direction: column;
@@ -3769,8 +3771,8 @@ select.form-input {
   /*flex-direction: column;*/
   align-items: center;
   width: 100%;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  /*padding: 0.75rem 0;*/
+  /*border-bottom: 1px solid rgba(229, 231, 235, 0.5);*/
 }
 
 /* 折叠状态下的头像 */
@@ -3814,12 +3816,12 @@ select.form-input {
 }
 
 /* 在折叠模式下隐藏这些部分 */
-.sidebar.collapsed .sidebar-actions,
-.sidebar.collapsed .sidebar-section,
-.sidebar.collapsed .sidebar-footer,
-.sidebar.collapsed .management-toggle-btn {
-  display: none;
-}
+/*.sidebar.collapsed .sidebar-actions,*/
+/*.sidebar.collapsed .sidebar-section,*/
+/*.sidebar.collapsed .sidebar-footer,*/
+/*.sidebar.collapsed .management-toggle-btn {*/
+/*  display: none;*/
+/*}*/
 
 /* 管理页面中的侧边栏切换按钮 - 更大更明显 */
 .admin-panel .toggle-sidebar-btn {
@@ -3914,3 +3916,71 @@ select.form-input {
 }
 
 
+/* 顶部横幅样式 - 修复遮挡问题 */
+.header-banner {
+  position: fixed;
+  top: 0;
+  left: 0; /* 与侧边栏宽度一致 */
+  right: 0;
+  height: 80px; /* 固定高度 */
+  background: linear-gradient(135deg, #ffffff, #ffffff, #ffffff);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgb(255, 255, 255);
+  overflow: hidden;
+  z-index: 5; /* 确保在适当的层级 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 侧边栏折叠时调整位置 */
+.sidebar.collapsed + .chat-main .header-banner,
+.sidebar.collapsed ~ .admin-main .header-banner {
+  left: 150px; /* 与折叠后侧边栏宽度一致 */
+}
+
+/* 闪光标题文字效果 */
+.shimmer-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          #3b82f6 50%,
+          rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% auto;
+  color: #fff; /* 备用颜色 */
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+  text-align: center;
+}
+
+/* 为主内容区域(.chat-main和.admin-main)添加响应式宽度调整 */
+.chat-main, .admin-main {
+  flex: 1;
+  transition: all 0.3s ease;
+  margin-top: 57px; /* 与横幅高度一致 */
+  width: calc(100% - 280px); /* 默认状态下减去侧边栏宽度 */
+}
+
+/* 消息容器高度调整 */
+.messages-container {
+  height: calc(100% - 80px);
+}
+
+/* 闪光动画 */
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* 添加有效的折叠侧边栏样式，取消注释并修改 */
+.sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  margin-left: -1px; /* 完全隐藏侧边栏 */
+  overflow: hidden;
+}

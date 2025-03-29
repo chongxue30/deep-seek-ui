@@ -23,11 +23,11 @@
         </div>
 
         <!-- Management toggle button for teachers - moved outside user-info for better positioning -->
-        <button v-if="isTeacher && !isSidebarCollapsed" class="management-toggle-btn" @click="toggleAdminMode">
-      <span class="toggle-icon">
-        <svg v-if="isAdminMode" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-      </span>
+        <button v-if="isTeacher " class="management-toggle-btn" @click="toggleAdminMode">
+          <span class="toggle-icon">
+            <svg v-if="isAdminMode" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </span>
           <span class="toggle-text">{{ isAdminMode ? '返回聊天' : '工作台' }}</span>
         </button>
 
@@ -78,6 +78,9 @@
       </div>
     </aside>
 
+    <div class="header-banner">
+      <h1 class="shimmer-title">AI导师 —— AI导师精准伴学，让知识触手可及</h1>
+    </div>
 
     <!-- Main chat area -->
     <main v-if="!isAdminMode" class="chat-main" :class="{ 'fade-in': true }">
@@ -1094,7 +1097,6 @@ import 'highlight.js/styles/github-dark.css' // 使用深色主题的代码高�
 import ChatHistory from './ChatHistory.vue'
 import { chatAPI } from '@/api/index'
 import { authAPI } from '@/api/auth'
-import CourseManagement from './course-management.vue';
 const router = useRouter()
 
 // Initialize markdown-it with code highlighting and custom renderer for code blocks
@@ -1183,7 +1185,6 @@ const messagesContainer = ref(null)
 const suggestedQuestions = ref([])
 // const isRecording = ref(false)
 const isDarkMode = inject('isDarkMode', ref(false))
-const toggleDarkMode = inject('toggleDarkMode', () => {})
 const currentMessageId = ref(null)
 const uploadedFiles = ref([])
 const userInfo = ref(null)
@@ -1430,170 +1431,9 @@ const getClassStudents = async (classId) => {
   }
 }
 
-// Add a function to toggle student selection
-const toggleStudentSelection = (studentId) => {
-  const index = selectedStudents.value.indexOf(studentId)
-  if (index === -1) {
-    selectedStudents.value.push(studentId)
-  } else {
-    selectedStudents.value.splice(index, 1)
-  }
-}
-
-// Add a function to toggle select all students
-const toggleSelectAllStudents = () => {
-  if (selectAllStudents.value) {
-    // Deselect all
-    selectedStudents.value = []
-  } else {
-    // Select all
-    selectedStudents.value = classStudents.value.map(student => student.studentId)
-  }
-  selectAllStudents.value = !selectAllStudents.value
-}
-
-// 批量移除学生
-const batchRemoveStudents = async () => {
-  if (selectedStudents.value.length === 0) {
-    showNotification('请先选择要移除的学生', 'error');
-    return;
-  }
-
-  const confirmMessage = `确定要将选中的 ${selectedStudents.value.length} 名学生从课程中移除吗？`;
-  if (!confirm(confirmMessage)) {
-    return;
-  }
-
-  try {
-    // 添加这个状态变量的定义（如果尚未定义）
-    const isRemovingStudents = ref(false);
-    isRemovingStudents.value = true;
-
-    const token = localStorage.getItem('token');
-
-    const res = await fetch('/dev-api/system/class/students/remove', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        classId: selectedClass.value.classId,
-        studentIds: selectedStudents.value
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error('批量移除学生失败');
-    }
-
-    const data = await res.json();
-    if (data.code === 200) {
-      showNotification('批量移除学生成功', 'success');
-      // 重置选择
-      selectedStudents.value = [];
-      selectAllStudents.value = false;
-      // 刷新学生列表
-      await getClassStudents(selectedClass.value.classId);
-    } else {
-      throw new Error(data.msg || '批量移除学生失败');
-    }
-  } catch (error) {
-    console.error('批量移除学生失败:', error);
-    showNotification(`批量移除学生失败: ${error.message}`, 'error');
-  } finally {
-    isRemovingStudents.value = false;
-  }
-};
 
 // Update the removeStudentFromClass function to handle multiple students
-const removeStudentFromClass = async (student) => {
-  // If a specific student is provided, just remove that one
-  const studentIds = student ? [student.studentId] : selectedStudents.value
 
-  if (studentIds.length === 0) {
-    showNotification('请先选择要移除的学生', 'error')
-    return
-  }
-
-  const confirmMessage = student
-      ? `确定要将学生 ${student.studentName} 从课程中移除吗？`
-      : `确定要将选中的 ${studentIds.length} 名学生从课程中移除吗？`
-
-  if (!confirm(confirmMessage)) {
-    return
-  }
-
-  try {
-    const token = localStorage.getItem('token')
-
-    const res = await fetch('/dev-api/system/class/students/remove', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        classId: selectedClass.value.classId,
-        studentIds: studentIds // Changed to send array of IDs
-      })
-    })
-
-    if (!res.ok) {
-      throw new Error('移除学生失败')
-    }
-
-    const data = await res.json()
-    if (data.code === 200) {
-      showNotification('移除学生成功', 'success')
-      // Reset selection
-      selectedStudents.value = []
-      selectAllStudents.value = false
-      // 刷新学生列表
-      await getClassStudents(selectedClass.value.classId)
-    } else {
-      throw new Error(data.msg || '移除学生失败')
-    }
-  } catch (error) {
-    console.error('移除学生失败:', error)
-    showNotification(`移除学生失败: ${error.message}`, 'error')
-  } finally {
-    isRemovingStudents.value = false
-  }
-}
-
-// Function to generate avatar color based on student name
-const getAvatarColor = (name) => {
-  if (!name) return '#3b82f6'
-
-  // Generate a consistent color based on the name
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-
-  // Convert to hex color
-  const colors = [
-    '#3b82f6', // blue
-    '#10b981', // green
-    '#f59e0b', // amber
-    '#ef4444', // red
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#f97316', // orange
-    '#14b8a6', // teal
-    '#6366f1'  // indigo
-  ]
-
-  return colors[Math.abs(hash) % colors.length]
-}
-
-// Function to get initials from name
-const getInitials = (name) => {
-  if (!name) return '?'
-  return name.charAt(0)
-}
 
 // 显示添加学生弹窗
 const showAddStudentsModal = async () => {
