@@ -1,7 +1,7 @@
 <template>
   <div class="chat-container" :class="{ 'dark': isDarkMode }">
     <!-- Sidebar -->
-    <aside class="sidebar" :class="{ 'slide-in': true }">
+    <aside class="sidebar" :class="{ 'slide-in': true, 'collapsed': isSidebarCollapsed }">
       <!-- User profile -->
       <div class="user-profile">
         <div class="avatar">
@@ -10,7 +10,7 @@
             {{ userInfo?.nickName?.charAt(0) || userInfo?.userName?.charAt(0) || 'U' }}
           </div>
         </div>
-        <div class="user-info">
+        <div class="user-info" >
           <div class="user-name-row">
             <div class="user-name">
               {{ userInfo ? userInfo.nickName || userInfo.userName : 'User' }}
@@ -23,16 +23,21 @@
         </div>
 
         <!-- Management toggle button for teachers - moved outside user-info for better positioning -->
-        <button v-if="isTeacher" class="management-toggle-btn" @click="toggleAdminMode">
-          <span class="toggle-icon">
-            <svg v-if="isAdminMode" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          </span>
+        <button v-if="isTeacher && !isSidebarCollapsed" class="management-toggle-btn" @click="toggleAdminMode">
+      <span class="toggle-icon">
+        <svg v-if="isAdminMode" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      </span>
           <span class="toggle-text">{{ isAdminMode ? '返回聊天' : '工作台' }}</span>
         </button>
 
+        <!-- Toggle sidebar button (visible when sidebar is collapsed) -->
+<!--        <button v-if="isSidebarCollapsed" class="toggle-sidebar-btn" @click="toggleSidebar">-->
+<!--          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>-->
+<!--        </button>-->
+
         <!-- 学生切换班级按钮 -->
-        <button v-if="isStudent" class="management-toggle-btn" @click="goToCourseSelection">
+        <button v-if="isStudent && !isSidebarCollapsed" class="management-toggle-btn" @click="goToCourseSelection">
       <span class="toggle-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
       </span>
@@ -40,50 +45,68 @@
         </button>
       </div>
 
-      <!-- Actions -->
-      <div class="sidebar-actions">
-        <button class="action-button primary" @click="createNewChat">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-          <span>新对话</span>
-        </button>
-<!--        <button class="action-button theme-toggle" @click="toggleDarkMode">-->
-<!--          <div class="toggle-track">-->
-<!--            <div class="toggle-thumb" :class="{ 'active': isDarkMode }">-->
-<!--              <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>-->
-<!--              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path></svg>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <span>{{ isDarkMode ? '黑暗模式' : '明亮模式' }}</span>-->
-<!--        </button>-->
-      </div>
+      <!-- These sections should only show when sidebar is not collapsed -->
+      <div v-if="!isSidebarCollapsed">
+        <!-- Actions -->
+        <div class="sidebar-actions">
+          <button class="action-button primary" @click="createNewChat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            <span>新对话</span>
+          </button>
+        </div>
 
-      <!-- Chat history -->
-      <div class="sidebar-section">
-        <h3 class="section-title">对话历史</h3>
-        <ChatHistory
-            :current-conversation-id="currentConversation?.id"
-            :user-info="userInfo"
-            :conversations="conversations"
-            @select-chat="handleSelectChat"
-            @delete-conversation="deleteConversation"
-            @rename-conversation="renameConversation"
-        />
-      </div>
+        <!-- Chat history -->
+        <div class="sidebar-section">
+          <h3 class="section-title">对话历史</h3>
+          <ChatHistory
+              :current-conversation-id="currentConversation?.id"
+              :user-info="userInfo"
+              :conversations="conversations"
+              @select-chat="handleSelectChat"
+              @delete-conversation="deleteConversation"
+              @rename-conversation="renameConversation"
+          />
+        </div>
 
-      <!-- Knowledge base section - moved to bottom -->
-      <div class="sidebar-footer">
-        <!-- Logout -->
-        <button class="action-button danger logout-btn" @click="handleLogout">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          <span>退出登录</span>
-        </button>
+        <!-- Logout button -->
+        <div class="sidebar-footer">
+          <button class="action-button danger logout-btn" @click="handleLogout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span>退出登录</span>
+          </button>
+        </div>
       </div>
     </aside>
+
 
     <!-- Main chat area -->
     <main v-if="!isAdminMode" class="chat-main" :class="{ 'fade-in': true }">
       <!-- 聊天界面 - 消息内容 -->
       <div class="messages-container" ref="messagesContainer">
+        <div v-if="messages.length === 0" class="welcome-container">
+          <div class="welcome-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-bot"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+          </div>
+          <h2 class="welcome-title">欢迎使用数院导师AI助手</h2>
+          <p class="welcome-message">有什么我可以帮助您的？请输入您的问题，我会尽力为您解答。</p>
+          <div class="welcome-suggestions">
+            <p class="suggestions-title">您可以这样问我：</p>
+            <div class="suggestions-list">
+              <button class="suggestion-button" @click="handleSuggestedQuestion('请介绍一下你自己')">
+                请介绍一下你自己
+              </button>
+              <button class="suggestion-button" @click="handleSuggestedQuestion('你能帮我做什么？')">
+                你能帮我做什么？
+              </button>
+              <button class="suggestion-button" @click="handleSuggestedQuestion('如何使用数院导师AI助手？')">
+                如何使用数院导师AI助手？
+              </button>
+              <button class="suggestion-button" @click="handleSuggestedQuestion('帮我写一段代码')">
+                帮我写一段代码
+              </button>
+            </div>
+          </div>
+        </div>
         <transition-group name="message-fade">
           <div v-for="message in messages"
                :key="message.id"
@@ -234,79 +257,82 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
           知识库管理
         </button> -->
-        <button
-            class="admin-nav-item"
-            :class="{ active: adminActiveTab === 'course' }"
-            @click="adminActiveTab = 'course'"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-          课程管理
-        </button>
+<!--        <button-->
+<!--            class="admin-nav-item"-->
+<!--            :class="{ active: adminActiveTab === 'course' }"-->
+<!--            @click="adminActiveTab = 'course'"-->
+<!--        >-->
+<!--          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
+<!--          课程管理-->
+<!--        </button>-->
       </div>
 
       <!-- 管理页面内容 -->
       <div class="admin-content">
         <!-- 知识库管理内容 -->
-        <div v-if="adminActiveTab === 'knowledge'" class="admin-panel">
-          <div class="admin-panel-header">
-            <h3>知识库列表</h3>
-            <button class="action-button primary" @click="showCreateKnowledgeBaseModal">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-              创建知识库
-            </button>
-          </div>
+<!--        <div v-if="adminActiveTab === 'knowledge'" class="admin-panel">-->
+<!--          <div class="admin-panel-header">-->
+<!--            <h3>知识库列表</h3>-->
+<!--            <button class="action-button primary" @click="showCreateKnowledgeBaseModal">-->
+<!--              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>-->
+<!--              创建知识库-->
+<!--            </button>-->
+<!--          </div>-->
 
-          <div v-if="isLoadingKnowledgeBases" class="loading-container">
-            <div class="loading-spinner"></div>
-            <p>加载中...</p>
-          </div>
+<!--          <div v-if="isLoadingKnowledgeBases" class="loading-container">-->
+<!--            <div class="loading-spinner"></div>-->
+<!--            <p>加载中...</p>-->
+<!--          </div>-->
 
-          <div v-else-if="knowledgeBases.length === 0" class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
-            <p>暂无知识库，请点击上方按钮创建</p>
-          </div>
+<!--          <div v-else-if="knowledgeBases.length === 0" class="empty-state">-->
+<!--            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>-->
+<!--            <p>暂无知识库，请点击上方按钮创建</p>-->
+<!--          </div>-->
 
-          <div v-else class="knowledge-list">
-            <div v-for="kb in knowledgeBases"
-                 :key="kb.id"
-                 class="knowledge-item">
-              <div class="knowledge-info">
-                <div class="knowledge-name">{{ kb.name }}</div>
-                <div class="knowledge-details" v-if="kb.description || kb.document_count !== undefined">
-                  <span v-if="kb.description" class="description">{{ kb.description }}</span>
-                  <div class="stats">
-                    <span v-if="kb.document_count !== undefined" class="document-count">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>
-                      文档数: {{ kb.document_count }}
-                    </span>
-                    <span v-if="kb.word_count !== undefined" class="word-count">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-text"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path d="M15.1 18H3"></path></svg>
-                      词数: {{ kb.word_count }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="knowledge-actions">
-                <button class="action-button small" @click="showDocumentsModal(kb)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>
-                  查看文档
-                </button>
-                <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>
-                  添加文档
-                </button>
-                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+<!--          <div v-else class="knowledge-list">-->
+<!--            <div v-for="kb in knowledgeBases"-->
+<!--                 :key="kb.id"-->
+<!--                 class="knowledge-item">-->
+<!--              <div class="knowledge-info">-->
+<!--                <div class="knowledge-name">{{ kb.name }}</div>-->
+<!--                <div class="knowledge-details" v-if="kb.description || kb.document_count !== undefined">-->
+<!--                  <span v-if="kb.description" class="description">{{ kb.description }}</span>-->
+<!--                  <div class="stats">-->
+<!--                    <span v-if="kb.document_count !== undefined" class="document-count">-->
+<!--                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>-->
+<!--                      文档数: {{ kb.document_count }}-->
+<!--                    </span>-->
+<!--                    <span v-if="kb.word_count !== undefined" class="word-count">-->
+<!--                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-text"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path d="M15.1 18H3"></path></svg>-->
+<!--                      词数: {{ kb.word_count }}-->
+<!--                    </span>-->
+<!--                  </div>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--              <div class="knowledge-actions">-->
+<!--                <button class="action-button small" @click="showDocumentsModal(kb)">-->
+<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>-->
+<!--                  查看文档-->
+<!--                </button>-->
+<!--                <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">-->
+<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>-->
+<!--                  添加文档-->
+<!--                </button>-->
+<!--                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">-->
+<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>-->
+<!--                </button>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
 
         <!-- 课程管理内容 -->
         <div v-if="adminActiveTab === 'course'" class="admin-panel">
           <div class="admin-panel-header">
             <!-- <h3>课程列表</h3> -->
+            <button v-if="isSidebarCollapsed" class="toggle-sidebar-btn" @click="toggleSidebar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
             <span class="class-count">{{ classList.length }}个课程</span>
             <button class="action-button primary" @click="showCreateClassForm">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
@@ -328,17 +354,17 @@
             <div class="course-grid-header">
               <!-- <h4>课程列表</h4> -->
             </div>
-            
+
             <div v-if="isLoadingClassList" class="loading-container">
               <div class="loading-spinner"></div>
               <p>加载课程列表中...</p>
             </div>
-            
+
             <div v-else-if="classList.length === 0" class="empty-state">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
               <p>暂无课程，请点击上方按钮创建新课程</p>
             </div>
-            
+
             <div v-else class="course-grid">
               <div v-for="classItem in classList"
                    :key="classItem.classId"
@@ -1101,15 +1127,29 @@ const md = new MarkdownIt({
 const isAdminMode = ref(false)
 const adminActiveTab = ref('course') // 'knowledge' 或 'course'
 
+const isSidebarCollapsed = ref(false)
+
 // 切换管理模式
 const toggleAdminMode = () => {
   isAdminMode.value = !isAdminMode.value
 
-  // 如果切换到管理模式，加载相关数据
+  // When entering admin mode, collapse the sidebar
   if (isAdminMode.value) {
-      getKnowledgeBases()
-      getClassList()
-    }
+    isSidebarCollapsed.value = true
+    getClassList()
+  } else {
+    // When exiting admin mode, expand the sidebar
+    isSidebarCollapsed.value = false
+  }
+}
+
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+
+  // If toggling back to expanded while in admin mode, exit admin mode
+  if (!isSidebarCollapsed.value && isAdminMode.value) {
+    isAdminMode.value = false
+  }
 }
 
 // Add script to document for copying code

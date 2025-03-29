@@ -3627,3 +3627,290 @@ select.form-input {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
+
+/* Welcome container styles */
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.welcome-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 50%;
+  color: white;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+  animation: pulse 3s infinite ease-in-out;
+}
+
+.welcome-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.dark .welcome-title {
+  color: #f9fafb;
+}
+
+.welcome-message {
+  font-size: 1.1rem;
+  color: #4b5563;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.dark .welcome-message {
+  color: #d1d5db;
+}
+
+.welcome-suggestions {
+  width: 100%;
+}
+
+.welcome-suggestions .suggestions-title {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.dark .welcome-suggestions .suggestions-title {
+  color: #9ca3af;
+}
+
+.welcome-suggestions .suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.welcome-suggestions .suggestion-button {
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.welcome-suggestions .suggestion-button:nth-child(1) { animation-delay: 0.1s; }
+.welcome-suggestions .suggestion-button:nth-child(2) { animation-delay: 0.2s; }
+.welcome-suggestions .suggestion-button:nth-child(3) { animation-delay: 0.3s; }
+.welcome-suggestions .suggestion-button:nth-child(4) { animation-delay: 0.4s; }
+
+.welcome-suggestions .suggestion-button:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .welcome-suggestions .suggestion-button {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .welcome-suggestions .suggestion-button:hover {
+  background-color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Add this pulse animation for the logo */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+  }
+}
+
+/* 改进的折叠侧边栏样式 */
+.sidebar.collapsed {
+  width: 150px; /* 稍窄一些 */
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  height: 2%; /* 确保侧边栏占满整个高度 */
+  position: relative;
+}
+
+/* 折叠状态下的用户资料 */
+.sidebar.collapsed .user-profile {
+  /*display: flex;*/
+  /*flex-direction: column;*/
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+/* 折叠状态下的头像 */
+/*.sidebar.collapsed .avatar {*/
+/*  margin: 0 auto;*/
+/*  width: 40px;*/
+/*  height: 40px;*/
+/*  min-width: 40px;*/
+/*}*/
+
+/*.sidebar.collapsed .user-info span {*/
+/*  font-size: 0.65rem;*/
+/*  display: block;*/
+/*  white-space: nowrap;*/
+/*  overflow: hidden;*/
+/*  text-overflow: ellipsis;*/
+/*  padding: 0 2px;*/
+/*}*/
+
+
+/* 折叠按钮位置 */
+/*.sidebar.collapsed .toggle-sidebar-btn {*/
+/*  position: absolute;*/
+/*  top: 20px; !* 位于用户信息下方 *!*/
+/*  right: -20px;*/
+/*  width: 24px;*/
+/*  height: 24px;*/
+/*  border-radius: 50%;*/
+/*  background-color: #f3f4f6;*/
+/*  border: 1px solid #e5e7eb;*/
+/*  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);*/
+/*  display: flex;*/
+/*  align-items: center;*/
+/*  justify-content: center;*/
+/*  z-index: 10;*/
+/*}*/
+
+.sidebar.collapsed .toggle-sidebar-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 在折叠模式下隐藏这些部分 */
+.sidebar.collapsed .sidebar-actions,
+.sidebar.collapsed .sidebar-section,
+.sidebar.collapsed .sidebar-footer,
+.sidebar.collapsed .management-toggle-btn {
+  display: none;
+}
+
+/* 管理页面中的侧边栏切换按钮 - 更大更明显 */
+.admin-panel .toggle-sidebar-btn {
+  position: absolute;
+  left: 16px;  /* 位置调整，更突出 */
+  top: 20px;
+  width: 36px;  /* 更大的尺寸 */
+  height: 36px;
+  border-radius: 50%;
+  background-color: #3b82f6;  /* 使用醒目的蓝色背景 */
+  color: white;
+  border: 2px solid #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 20;  /* 提高层级确保可见 */
+  animation: pulse-attention 1.5s ease-in-out 3;  /* 初次加载时吸引注意力 */
+}
+
+.admin-panel .toggle-sidebar-btn:hover {
+  background-color: #2563eb;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.admin-panel .toggle-sidebar-btn svg {
+  width: 20px;  /* 图标也相应变大 */
+  height: 20px;
+  color: white;  /* 白色图标更醒目 */
+  transition: transform 0.3s ease;
+}
+
+.admin-panel .toggle-sidebar-btn:hover svg {
+  transform: rotate(180deg);  /* 悬停时轻微旋转，提供交互反馈 */
+}
+
+/* 按钮的脉动动画效果 */
+@keyframes pulse-attention {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    transform: scale(1.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    transform: scale(1);
+  }
+}
+
+/* 调整面板标题区域，确保有足够空间 */
+.admin-panel-header {
+  position: relative;
+  padding-left: 70px;  /* 增加左侧填充，为更大的按钮腾出空间 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+/* 添加指示性标签，首次打开时显示，帮助用户发现按钮 */
+.admin-panel .toggle-sidebar-btn::after {
+  content: "返回对话";
+  position: absolute;
+  left: 45px;
+  white-space: nowrap;
+  background-color: #3b82f6;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.admin-panel .toggle-sidebar-btn:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.dark .admin-panel .toggle-sidebar-btn::after {
+  background-color: #60a5fa;
+  color: #111827;
+}
+
+
