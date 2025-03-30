@@ -1602,7 +1602,18 @@ const getKnowledgeBases = async () => {
     isLoadingKnowledgeBases.value = true
     const token = localStorage.getItem('token')
 
-    const res = await fetch('/dev-api/dataset/list?page=1&limit=100', {
+    // 获取当前教师ID
+    let teacherId = null
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      teacherId = userInfo.userId || userInfo.teacherId || null
+    }
+
+    // 添加teacherId作为查询参数
+    const url = '/dev-api/dataset/list?page=1&limit=100' + (teacherId ? `&teacherId=${teacherId}` : '');
+
+    const res = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1632,6 +1643,7 @@ const getKnowledgeBases = async () => {
   }
 }
 
+
 // 显示创建知识库弹窗
 const showCreateKnowledgeBaseModal = () => {
   if (!isTeacher.value) {
@@ -1658,6 +1670,14 @@ const submitCreateKnowledgeBase = async () => {
     isCreatingKB.value = true
     const token = localStorage.getItem('token')
 
+    // 获取当前教师ID
+    let teacherId = null
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      teacherId = userInfo.userId || userInfo.teacherId || null
+    }
+
     const res = await fetch('/dev-api/dataset/create', {
       method: 'POST',
       headers: {
@@ -1668,7 +1688,8 @@ const submitCreateKnowledgeBase = async () => {
         name: newKnowledgeBase.value.name,
         description: newKnowledgeBase.value.description,
         indexing_technique: 'economy',
-        permission: 'all_team_members'
+        permission: 'all_team_members',
+        teacherId: teacherId // 添加教师ID
       })
     })
 
@@ -1913,18 +1934,18 @@ const viewDocument = async (doc) => {
         if (data.data) {
           currentDocument.value = {
             ...doc,
-            text: data.data.text || '无法获取文档内容'
+            text: data.data.text || '您暂无权限查看文档内容'
           }
         }
       } else {
-        throw new Error('获取文档内容失败')
+        throw new Error('您暂无权限查看文档内容')
       }
     } catch (error) {
-      console.error('获取文档内容失败:', error)
-      showNotification('获取文档内容失败', 'error')
+      console.error('您暂无权限查看文档内容:', error)
+      showNotification('您暂无权限查看文档内容', 'error')
       currentDocument.value = {
         ...doc,
-        text: '获取文档内容失败'
+        text: '您暂无权限查看文档内容'
       }
     } finally {
       isLoadingDocContent.value = false
