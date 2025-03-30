@@ -274,8 +274,23 @@
               <label for="select-all-students">全选</label>
             </div>
 
-            <!-- 添加学生按钮 -->
+            <!-- 移除、添加学生按钮 -->
             <div class="student-actions-right">
+              <button
+                  v-if="selectedStudents.length > 0"
+                  class="action-button warning"
+                  @click="batchRemoveStudents"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                     class="lucide lucide-user-minus">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="16" x2="22" y1="11" y2="11"></line>
+                </svg>
+                批量移除 ({{ selectedStudents.length }})
+              </button>
+              &nbsp;
               <button class="action-button primary" @click="showAddStudentsModal">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -777,49 +792,87 @@
         </div>
 
         <!-- 按班级添加 -->
+        <!-- 按班级添加部分的修改 -->
         <div v-if="addStudentTab === 'class'" class="class-selection-tab">
-          <div v-if="isLoadingClassNames" class="loading-container small">
+          <div v-if="isLoadingCollege || isLoadingMajor || isLoadingClas || isLoadingPreviewStudents" class="loading-container small">
             <div class="loading-spinner"></div>
-            <p>加载班级列表中...</p>
+            <p>加载数据中...</p>
           </div>
           <div v-else>
-            <div class="form-group">
-              <label for="class-select">选择班级</label>
-              <select
-                  id="class-select"
-                  v-model="selectedClassName"
-                  class="form-input"
-              >
-                <option value="">请选择班级</option>
-                <option v-for="className in classNameList" :key="className" :value="className">
-                  {{ className }}
-                </option>
-              </select>
+            <!-- 学院专业班级选择区域（横向排列） -->
+            <div class="selection-row">
+              <!-- 学院选择 -->
+              <div class="form-group-horizontal">
+                <label for="college-select">选择学院</label>
+                <select
+                    id="college-select"
+                    v-model="selectedCollegeId"
+                    class="form-input"
+                    @change="handleCollegeChange"
+                >
+                  <option value="">请选择学院</option>
+                  <option v-for="college in collegeList" :key="college.collegeId" :value="college.collegeId">
+                    {{ college.collegeName }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- 专业选择 -->
+              <div class="form-group-horizontal" :class="{'disabled': !selectedCollegeId}">
+                <label for="major-select">选择专业</label>
+                <select
+                    id="major-select"
+                    v-model="selectedMajorId"
+                    class="form-input"
+                    @change="handleMajorChange"
+                    :disabled="!selectedCollegeId"
+                >
+                  <option value="">请选择专业</option>
+                  <option v-for="major in majorList" :key="major.majorId" :value="major.majorId">
+                    {{ major.majorName }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- 班级选择 -->
+              <div class="form-group-horizontal" :class="{'disabled': !selectedMajorId}">
+                <label for="class-select">选择班级</label>
+                <select
+                    id="class-select"
+                    v-model="selectedClassId"
+                    class="form-input"
+                    @change="handleClassChange"
+                    :disabled="!selectedMajorId"
+                >
+                  <option value="">请选择班级</option>
+                  <option v-for="clas in classList" :key="clas.clasId" :value="clas.clasId">
+                    {{ clas.clasName }}
+                  </option>
+                </select>
+              </div>
             </div>
 
-            <div v-if="selectedClassName" class="preview-container">
+            <!-- 预览学生列表 -->
+            <div v-if="selectedClassId" class="preview-container">
               <div class="preview-header">
-                <h4>预览: {{ selectedClassName }} 班级学生 ({{ previewStudents.length }}人)</h4>
+                <h4>预览: 选中班级学生 ({{ previewStudents.length }}人)</h4>
               </div>
 
-              <div v-if="isLoadingPreviewStudents" class="loading-container small">
-                <div class="loading-spinner"></div>
-                <p>加载学生列表中...</p>
-              </div>
-
-              <div v-else-if="previewStudents.length === 0" class="empty-state small">
+              <div v-if="previewStudents.length === 0" class="empty-state small">
                 <p>该班级暂无学生</p>
               </div>
 
               <div v-else class="preview-students">
                 <div v-for="student in previewStudents" :key="student.studentId" class="preview-student-item">
                   <div class="student-name">{{ student.studentName }}</div>
-                  <div class="student-id">{{ student.studentId }}</div>
+                  <div class="student-id">{{ student.studentNo }}</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+
 
         <!-- 手动添加学生 -->
         <div v-if="addStudentTab === 'manual'" class="manual-add-tab">
@@ -1245,17 +1298,211 @@ function getRecommendationIcon(iconName) {
   }
 }
 
-// 显示添加学生弹窗
+// 学院、专业、班级相关状态
+const collegeList = ref([])
+const majorList = ref([])
+const classList = ref([])
+const selectedCollegeId = ref('')
+const selectedMajorId = ref('')
+const selectedClassId = ref('')
+const isLoadingCollege = ref(false)
+const isLoadingMajor = ref(false)
+const isLoadingClas = ref(false)
+
+// 获取学院列表
+const getCollegeList = async () => {
+  try {
+    isLoadingCollege.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/college/list', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取学院列表失败')
+    }
+
+    const data = await res.json()
+    if (data.rows && Array.isArray(data.rows)) {
+      collegeList.value = data.rows
+    } else if (data.data && Array.isArray(data.data)) {
+      collegeList.value = data.data
+    } else {
+      collegeList.value = []
+    }
+  } catch (error) {
+    console.error('获取学院列表失败:', error)
+    showNotification('获取学院列表失败', 'error')
+  } finally {
+    isLoadingCollege.value = false
+  }
+}
+
+// 根据学院ID获取专业列表
+const getMajorList = async (collegeId) => {
+  if (!collegeId) return
+
+  try {
+    isLoadingMajor.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/major/listByCollegeId', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ collegeId: collegeId })
+    })
+
+    if (!res.ok) {
+      throw new Error('获取专业列表失败')
+    }
+
+    const data = await res.json()
+    if (data.rows && Array.isArray(data.rows)) {
+      majorList.value = data.rows
+    } else if (data.data && Array.isArray(data.data)) {
+      majorList.value = data.data
+    } else {
+      majorList.value = []
+    }
+  } catch (error) {
+    console.error('获取专业列表失败:', error)
+    showNotification('获取专业列表失败', 'error')
+  } finally {
+    isLoadingMajor.value = false
+  }
+}
+
+// 根据专业ID获取班级列表
+const getClassList = async (majorId) => {
+  if (!majorId) return
+
+  try {
+    isLoadingClas.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/clas/listByMajorId', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ majorId: majorId })
+    })
+
+    if (!res.ok) {
+      throw new Error('获取班级列表失败')
+    }
+
+    const data = await res.json()
+    if (data.rows && Array.isArray(data.rows)) {
+      classList.value = data.rows
+    } else if (data.data && Array.isArray(data.data)) {
+      classList.value = data.data
+    } else {
+      classList.value = []
+    }
+  } catch (error) {
+    console.error('获取班级列表失败:', error)
+    showNotification('获取班级列表失败', 'error')
+  } finally {
+    isLoadingClas.value = false
+  }
+}
+
+// 根据班级ID获取学生列表
+const getStudentsByClassId = async (clasId) => {
+  if (!clasId) return
+
+  try {
+    isLoadingPreviewStudents.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch('/dev-api/system/student/listByClasId', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ clasId: clasId })
+    })
+
+    if (!res.ok) {
+      throw new Error('获取班级学生列表失败')
+    }
+
+    const data = await res.json()
+    if (data.rows && Array.isArray(data.rows)) {
+      previewStudents.value = data.rows
+    } else if (data.data && Array.isArray(data.data)) {
+      previewStudents.value = data.data
+    } else {
+      previewStudents.value = []
+    }
+  } catch (error) {
+    console.error('获取班级学生列表失败:', error)
+    showNotification('获取班级学生列表失败', 'error')
+  } finally {
+    isLoadingPreviewStudents.value = false
+  }
+}
+
+// 处理学院选择变化
+const handleCollegeChange = () => {
+  selectedMajorId.value = ''
+  selectedClassId.value = ''
+  majorList.value = []
+  classList.value = []
+  previewStudents.value = []
+
+  if (selectedCollegeId.value) {
+    getMajorList(selectedCollegeId.value)
+  }
+}
+
+// 处理专业选择变化
+const handleMajorChange = () => {
+  selectedClassId.value = ''
+  classList.value = []
+  previewStudents.value = []
+
+  if (selectedMajorId.value) {
+    getClassList(selectedMajorId.value)
+  }
+}
+
+// 处理班级选择变化
+const handleClassChange = () => {
+  previewStudents.value = []
+
+  if (selectedClassId.value) {
+    getStudentsByClassId(selectedClassId.value)
+  }
+}
+
+// 修改显示添加学生弹窗方法
 const showAddStudentsModal = () => {
   showAddStudentModal.value = true
   addStudentTab.value = 'class'
+
+  // 重置所有选择状态
+  selectedCollegeId.value = ''
+  selectedMajorId.value = ''
+  selectedClassId.value = ''
   selectedClassName.value = ''
   previewStudents.value = []
   manualStudentId.value = ''
   manualStudentInfo.value = null
 
-  // 获取班级列表
-  getClassNames()
+  // 获取学院列表
+  getCollegeList()
 }
 
 // 关闭添加学生弹窗

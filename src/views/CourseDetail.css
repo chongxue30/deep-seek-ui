@@ -1252,3 +1252,103 @@
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
 }
+/* 横向选择布局 */
+.selection-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  background-color: #f9fafb;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-group-horizontal {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-group-horizontal label {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-group-horizontal select {
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  padding: 0 12px;
+  transition: all 0.2s;
+  background-color: white;
+}
+
+.form-group-horizontal select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  outline: none;
+}
+
+.form-group-horizontal.disabled label {
+  color: #9ca3af;
+}
+
+.form-group-horizontal.disabled select {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-available;
+}
+
+/* 美化预览区域 */
+.preview-container {
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.preview-header {
+  background-color: #f3f4f6;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.preview-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #111827;
+}
+
+.preview-students {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.preview-student-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.preview-student-item:last-child {
+  border-bottom: none;
+}
+
+.preview-student-item .student-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.preview-student-item .student-id {
+  color: #6b7280;
+  font-size: 14px;
+}
