@@ -1,0 +1,74 @@
+.custom-expired-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: none;
+}
+
+.custom-expired-dialog .el-message-box__header {
+  display: none;
+}
+
+.custom-expired-dialog .el-message-box__btns {
+  padding: 15px 25px 25px;
+  display: flex;
+  justify-content: center;
+}
+
+.custom-expired-dialog .el-button--primary {
+  background: linear-gradient(135deg, #409eff, #1976d2);
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.custom-expired-dialog .el-button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(64, 158, 255, 0.4);
+}
+
+.expired-dialog {
+  text-align: center;
+  padding: 30px 25px 10px;
+  background: linear-gradient(to bottom, #f8f9fc, #ffffff);
+}
+
+.expired-icon {
+  font-size: 70px;
+  color: #e6a23c;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+  display: inline-block;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.expired-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #303133;
+}
+
+.expired-content {
+  font-size: 15px;
+  color: #606266;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.expired-content strong {
+  color: #409eff;
+  font-weight: 500;
+}

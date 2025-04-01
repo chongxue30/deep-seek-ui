@@ -1,4 +1,5 @@
 import axios from 'axios'
+
 axios.defaults.timeout = 30000;  // 全局设置 30 秒超时
 const BASE_URL = '/api'  // 所有请求都通过代理指向本地服务器
 const API_KEY = 'Bearer app-Vr06unpxuIl56BHJ6U0eFTc8'
@@ -19,13 +20,19 @@ export const chatAPI = {
   },
 
   // 发送对话消息
-  sendMessage: (data) => {
-    return fetch('http://https://chat.imutoj.cn/dev-api/deepSeek/sendMessage', {
+  // 发送流式消息请求 - 直接返回原始响应对象
+  sendStreamMessage: async (params) => {
+    const token = localStorage.getItem('token') || '';
+
+    // 使用原生 fetch API 而不是 axios
+    return await fetch('https://chat.imutoj.cn/dev-api/deepSeek/sendMessage', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' ,
-        'Authorization': `Bearer ${token}`},
-      body: data
-      })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(params)
+    });
   },
 
   // 停止响应

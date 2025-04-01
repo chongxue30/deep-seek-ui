@@ -6,6 +6,8 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './styles/dark-theme.scss'
+import '@/assets/styles/global.scss' // 导入全局样式
+
 
 console.log('Main.js is executing')
 
