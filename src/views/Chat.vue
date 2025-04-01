@@ -1043,12 +1043,12 @@
     <!-- 登出确认弹窗 -->
     <div v-if="showLogoutConfirm" class="modal-backdrop" @click="cancelLogout"></div>
     <div v-if="showLogoutConfirm" class="modal-container logout-modal">
-      <div class="modal-header">
-        <h3>确认退出</h3>
-        <button class="close-button" @click="cancelLogout">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-        </button>
-      </div>
+<!--      <div class="modal-header">-->
+<!--        <h3>确认退出</h3>-->
+<!--        <button class="close-button" @click="cancelLogout">-->
+<!--          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>-->
+<!--        </button>-->
+<!--      </div>-->
 
       <div class="modal-body">
         <div class="logout-warning">
@@ -1101,7 +1101,7 @@ const router = useRouter()
 
 // Initialize markdown-it with code highlighting and custom renderer for code blocks
 const md = new MarkdownIt({
-  html: true,
+  html: false,
   linkify: true,
   typographer: true,
   highlight: function (str, lang) {
