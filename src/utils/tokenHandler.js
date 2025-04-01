@@ -13,7 +13,7 @@ export function handleTokenExpired() {
         try {
             const flagData = JSON.parse(expiredFlagData)
             // 如果标记存在且未过期（设置5分钟过期时间）
-            if (flagData.timestamp && (now - flagData.timestamp <  1000)) {
+            if (flagData.timestamp && (now - flagData.timestamp < 5 * 60 * 1000)) {
                 console.log('检测到有效的isShowingTokenExpired，跳过弹窗')
                 return Promise.reject('登录状态已过期')
             } else {
