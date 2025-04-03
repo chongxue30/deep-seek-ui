@@ -221,8 +221,8 @@
             <button
                 class="action-button icon-only primary tooltip-wrapper"
                 @click="sendMessage"
-                :disabled="isSendingMessage.value || !inputMessage.trim()"
-                :class="{ 'disabled': isSendingMessage.value || !inputMessage.trim() }"
+                :disabled="isSendingMessage || !inputMessage.trim()"
+                :class="{ 'disabled': isSendingMessage || !inputMessage.trim() }"
             >
               <span class="tooltip">发送消息</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
