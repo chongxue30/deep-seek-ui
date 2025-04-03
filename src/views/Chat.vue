@@ -37,12 +37,12 @@
 <!--        </button>-->
 
         <!-- 学生切换班级按钮 -->
-        <button v-if="isStudent && !isSidebarCollapsed" class="management-toggle-btn" @click="goToCourseSelection">
-      <span class="toggle-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-      </span>
-          <span class="toggle-text">切换班级</span>
-        </button>
+<!--        <button v-if="isStudent && !isSidebarCollapsed" class="management-toggle-btn" @click="goToCourseSelection">-->
+<!--      <span class="toggle-icon">-->
+<!--        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
+<!--      </span>-->
+<!--          <span class="toggle-text">切换班级</span>-->
+<!--        </button>-->
       </div>
 
       <!-- These sections should only show when sidebar is not collapsed -->
@@ -218,9 +218,12 @@
             </label>
 
             <!-- Send button -->
-            <button class="action-button icon-only primary tooltip-wrapper"
-                    @click="sendMessage"
-                    :disabled="isLoading || !inputMessage.trim()">
+            <button
+                class="action-button icon-only primary tooltip-wrapper"
+                @click="sendMessage"
+                :disabled="isSendingMessage.value || !inputMessage.trim()"
+                :class="{ 'disabled': isSendingMessage.value || !inputMessage.trim() }"
+            >
               <span class="tooltip">发送消息</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
             </button>
@@ -1280,11 +1283,6 @@ const isStudent = computed(() => {
   return userInfo.value.roles.some(role => role.roleKey === 'stu');
 });
 
-// 添加切换班级方法
-const goToCourseSelection = () => {
-  router.push('/course-selection');
-};
-
 //新标签页中打开
 const openCourseInNewPage = (classItem) => {
   window.open(`/course/${classItem.classId}`, '_blank')
@@ -1821,6 +1819,9 @@ const createNewChat = () => {
 
 const handleSelectChat = async (chat) => {
   currentConversation.value = chat
+  if (chat.class_id) {
+    localStorage.setItem('selectedCourseId', chat.class_id)
+  }
   await getMessages(chat.id)
 }
 
@@ -2032,7 +2033,8 @@ const getConversations = async () => {
         introduction: decodeUnicode(conv.introduction || ''),
         status: conv.status,
         created_at: conv.created_at,
-        updated_at: conv.updated_at
+        updated_at: conv.updated_at,
+        class_id: conv.class_id // Add this line to capture the class_id
       }))
     }
   } catch (error) {
@@ -2053,8 +2055,12 @@ const generateId = () => {
   return Math.random().toString(36).substr(2, 9)
 }
 
+const isSendingMessage = ref(false);
+
 const sendMessage = async () => {
-  if (!inputMessage.value.trim()) return;
+  if (!inputMessage.value.trim() || isLoading.value) return;  // Add isLoading check to prevent sending while loading
+
+  isSendingMessage.value = true;  // 设置为正在发送消息
 
   // Add user message
   const messageId = generateId();
@@ -2124,7 +2130,6 @@ const sendMessage = async () => {
       })
     });
 
-    // 其余代码保持不变...
 
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status}`);
@@ -2138,6 +2143,7 @@ const sendMessage = async () => {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
+    let newConversationId = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -2170,6 +2176,11 @@ const sendMessage = async () => {
           // Parse JSON data
           const parsedData = JSON.parse(data);
 
+          // Store conversation_id if present and we don't have a current conversation
+          if (parsedData.conversation_id && !currentConversation.value) {
+            newConversationId = parsedData.conversation_id;
+          }
+
           // Update UI based on event type
           if (eventType === 'agent_thought' && parsedData.thought) {
             // Update thinking process
@@ -2192,19 +2203,24 @@ const sendMessage = async () => {
               messages.value[index].content += parsedData.answer;
               await scrollToBottom();
             }
+          } else if (eventType === 'message_end') {
+            // Handle end of message, update conversation if needed
+            if (newConversationId) {
+              await updateCurrentConversation(newConversationId);
+            }
           }
         } catch (e) {
           console.error('Failed to parse data:', e, data);
         }
       }
     }
-
     isLoading.value = false;
     currentMessageId.value = null;
 
-    // If this is a new chat, get conversations
-    if (!currentConversation.value) {
-      getConversations();
+    // If this is a new chat, get conversations and update the current conversation
+    if (!currentConversation.value && newConversationId) {
+      await getConversations();
+      updateCurrentConversation(newConversationId);
     }
   } catch (error) {
     console.error('Failed to send message:', error);
@@ -2219,9 +2235,30 @@ const sendMessage = async () => {
       alert('请先选择一个课程');
       router.push('/course-selection');
     }
+  }finally {
+    isSendingMessage.value = false;  // 响应完成，允许发送新消息
   }
 };
 
+// Add a helper function to update the current conversation
+const updateCurrentConversation = async (conversationId) => {
+  if (!conversationId) return;
+
+  // First check if the conversation is already in our list
+  let conversation = conversations.value.find(conv => conv.id === conversationId);
+
+  // If not found, refresh the conversation list
+  if (!conversation) {
+    await getConversations();
+    conversation = conversations.value.find(conv => conv.id === conversationId);
+  }
+
+  // Update current conversation if found
+  if (conversation) {
+    currentConversation.value = conversation;
+    console.log('Updated current conversation:', conversation);
+  }
+}
 const stopResponse = () => {
   isLoading.value = false;
   currentMessageId.value = null;

@@ -4097,3 +4097,17 @@ select.form-input {
     opacity: 0.9;
   }
 }
+
+button:disabled {
+  opacity: 0.5; /* 将禁用按钮的透明度降低 */
+  cursor: not-allowed; /* 更改鼠标指针为禁止样式 */
+  background-color: #e0e0e0; /* 设置禁用时的背景颜色 */
+  color: #888; /* 设置禁用时的字体颜色 */
+}
+
+/* 启用状态下的样式 */
+button {
+  background-color: #007bff; /* 例如设置按钮正常时的背景颜色 */
+  color: white; /* 正常时文字颜色 */
+  cursor: pointer; /* 鼠标样式 */
+}
