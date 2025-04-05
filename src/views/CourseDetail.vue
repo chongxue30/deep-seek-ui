@@ -245,7 +245,16 @@
             <line x1="17" x2="22" y1="8" y2="13"></line>
             <line x1="22" x2="17" y1="8" y2="13"></line>
           </svg>
-          <p>课程暂无学生，请点击"添加学生"按钮添加</p>
+          <p>课程暂无学生</p>
+          <button class="action-button primary" @click="showAddStudentsModal" style="margin-top: 16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" x2="19" y1="8" y2="14"></line>
+              <line x1="16" x2="22" y1="11" y2="11"></line>
+            </svg>
+            添加学生
+          </button>
         </div>
 
         <div v-else class="student-management">
@@ -924,8 +933,8 @@
             class="action-button primary"
             @click="confirmAddStudents"
             :disabled="isAddingStudents ||
-                  (addStudentTab === 'class' && !selectedClassName) ||
-                  (addStudentTab === 'manual' && !manualStudentInfo)"
+            (addStudentTab === 'class' && !selectedClassId) ||
+            (addStudentTab === 'manual' && !manualStudentInfo)"
         >
           <span v-if="isAddingStudents">添加中...</span>
           <span v-else>确认添加</span>
@@ -1030,7 +1039,7 @@
                 </el-icon>
               </div>
               <div class="stat-details">
-                <div class="stat-value">{{ studentProfile.lastActiveTime }}</div>
+                <div class="stat-value">{{ formatISODate(studentProfile.lastActiveTime) }}</div>
                 <div class="stat-label">最后活跃</div>
               </div>
             </div>
@@ -1454,6 +1463,32 @@ const getStudentsByClassId = async (clasId) => {
   }
 }
 
+// 格式化ISO日期字符串
+const formatISODate = (isoString) => {
+  if (!isoString) return '暂无记录';
+
+  try {
+    const date = new Date(isoString);
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return isoString;
+
+    // 格式化为 YYYY-MM-DD HH:MM
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+
+    // 或者使用本地化格式（更友好但格式可能因浏览器设置而异）
+    // return date.toLocaleString();
+  } catch (e) {
+    console.error('日期格式化错误:', e);
+    return isoString;
+  }
+}
+
 // 处理学院选择变化
 const handleCollegeChange = () => {
   selectedMajorId.value = ''
@@ -1642,7 +1677,7 @@ const confirmAddStudents = async () => {
 
     if (addStudentTab.value === 'class') {
       // 按班级添加学生
-      if (!selectedClassName.value || previewStudents.value.length === 0) {
+      if (!selectedClassId.value || previewStudents.value.length === 0) {
         showNotification('请选择有效的班级', 'error')
         return
       }

@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://chat.imutoj.cn/dev-api/',
+        target: 'https://ai.meet-life.top/dev-api/',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

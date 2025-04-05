@@ -11,7 +11,7 @@ module.exports = {
     proxy: {
       // 配置反向代理
       '/dev-api': {
-        target: 'https://chat.imutoj.cn/dev-api/',
+        target: 'https://ai.meet-life.top/dev-api/',
         changeOrigin: true,
         pathRewrite: {
           '^/dev-api': ''

@@ -2115,7 +2115,7 @@ const sendMessage = async () => {
     }
 
     // Create POST request - using original API path
-    const response = await fetch('https://chat.imutoj.cn/deepSeek/sendMessage', {
+    const response = await fetch('https://ai.meet-life.top/dev-api/deepSeek/sendMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2571,7 +2571,7 @@ const submitAddDocument = async () => {
         formData.append('data', processData);
 
         // 发送请求到后端API
-        const response = await fetch('https://chat.imutoj.cn/dev-api/document/createByFile', {
+        const response = await fetch('https://ai.meet-life.top/dev-api/document/createByFile', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -2599,7 +2599,7 @@ const submitAddDocument = async () => {
     } else {
       // 手动输入文本创建文档
       const token = localStorage.getItem('token');
-      const res = await fetch('https://chat.imutoj.cn/dev-api/document/create', {
+      const res = await fetch('https://ai.meet-life.top/dev-api/document/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' ,
           'Authorization': `Bearer ${token}`},
@@ -2680,7 +2680,7 @@ const confirmDelete = async () => {
     if (deleteType.value === 'kb') {
       const token = localStorage.getItem('token');
       // 删除知识库
-      const res = await fetch(`https://chat.imutoj.cn/dev-api/dataset/delete/${itemToDelete.value.id}`, {
+      const res = await fetch(`https://ai.meet-life.top/dev-api/dataset/delete/${itemToDelete.value.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`}
@@ -2695,7 +2695,7 @@ const confirmDelete = async () => {
     } else {
       // 删除文档
       const token = localStorage.getItem('token');
-      const res = await fetch('https://chat.imutoj.cn/dev-api/document/delete', {
+      const res = await fetch('https://ai.meet-life.top/dev-api/document/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`},

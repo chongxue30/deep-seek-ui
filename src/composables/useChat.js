@@ -273,7 +273,7 @@ export function useChat() {
         try {
             const token = localStorage.getItem('token')
             // Create POST request
-            const response = await fetch('https://chat.imutoj.cn/dev-api/deepSeek/sendMessage', {
+            const response = await fetch('https://ai.meet-life.top/dev-api/deepSeek/sendMessage', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
