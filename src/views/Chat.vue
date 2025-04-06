@@ -1,18 +1,25 @@
-"use client"
-
-import { useRouter } from "next/navigation"
-
 <template>
   <div class="chat-container" :class="{ 'dark': isDarkMode }">
     <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'slide-in': true, 'collapsed': isSidebarCollapsed }">
       <!-- User profile -->
       <div class="user-profile">
-        <div class="avatar">
+        <div v-if="showAvatarDropdown" class="avatar-dropdown">
+          <div class="dropdown-item" @click="showPasswordModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-key"><circle cx="8" cy="12" r="2"></circle><path d="M15.92 4.08a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0L7 15"></path><path d="M12 12 15 15"></path><path d="m2 18 2.83 2.83"></path><path d="m18 6-4.6-4.6a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83L18 6Z"></path></svg>
+            <span>修改密码</span>
+          </div>
+          <div class="dropdown-item" @click="handleLogout">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span>退出登录</span>
+          </div>
+        </div>
+        <div class="avatar" @click="toggleAvatarDropdown">
           <img v-if="userInfo?.avatar" :src="userInfo.avatar" alt="User avatar" />
           <div v-else class="avatar-placeholder">
             {{ userInfo?.nickName?.charAt(0) || userInfo?.userName?.charAt(0) || 'U' }}
           </div>
+
         </div>
         <div class="user-info" >
           <div class="user-name-row">
@@ -354,10 +361,10 @@ import { useRouter } from "next/navigation"
             <p>加载课程列表中...</p>
           </div>
 
-          <div v-else-if="classList.length === 0" class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-            <p>暂无课程，请点击上方按钮创建新课程</p>
-          </div>
+<!--          <div v-else-if="classList.length === 0" class="empty-state">-->
+<!--            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
+<!--            <p>暂无课程，请点击上方按钮创建新课程</p>-->
+<!--          </div>-->
 
           <div class="course-grid-container">
             <div class="course-grid-header">
@@ -1100,6 +1107,68 @@ import { useRouter } from "next/navigation"
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
       <span>复制成功</span>
     </div>
+
+    <!-- 修改密码弹窗 -->
+    <div v-if="showPasswordModalFlag" class="modal-backdrop" @click="closePasswordModal"></div>
+    <div v-if="showPasswordModalFlag" class="modal-container password-modal">
+      <div class="modal-header">
+        <h3>修改密码</h3>
+        <button class="close-button" @click="closePasswordModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div v-if="passwordError" class="error-message">
+          {{ passwordError }}
+        </div>
+
+        <div class="form-group">
+          <label for="old-password">旧密码</label>
+          <input
+              type="password"
+              id="old-password"
+              v-model="oldPassword"
+              placeholder="请输入旧密码"
+              class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="new-password">新密码</label>
+          <input
+              type="password"
+              id="new-password"
+              v-model="newPassword"
+              placeholder="请输入新密码"
+              class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirm-password">确认新密码</label>
+          <input
+              type="password"
+              id="confirm-password"
+              v-model="confirmPassword"
+              placeholder="请再次输入新密码"
+              class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-button" @click="closePasswordModal">取消</button>
+        <button
+            class="action-button primary"
+            @click="submitPasswordChange"
+            :disabled="isChangingPassword"
+        >
+          <span v-if="isChangingPassword">修改中...</span>
+          <span v-else>确认修改</span>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1208,6 +1277,12 @@ const fileInput = ref(null)
 const isSpeaking = ref(false)
 const copySuccess = ref(false)
 const showLogoutConfirm = ref(false)
+const showAvatarDropdown = ref(false)
+const oldPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref('')
+const isChangingPassword = ref(false)
 
 // 分页相关状态
 const currentPage = ref(1)
@@ -2897,6 +2972,104 @@ const deleteClass = async (classItem) => {
     showNotification(`删除课程失败: ${error.message}`, 'error')
   }
 }
+
+// Avatar dropdown methods
+const toggleAvatarDropdown = () => {
+  showAvatarDropdown.value = !showAvatarDropdown.value;
+  console.log('showAvatarDropdown:', showAvatarDropdown.value); // 调试用
+};
+
+const closeAvatarDropdown = () => {
+  showAvatarDropdown.value = false;
+};
+
+// Password modal methods
+const showPasswordModalFlag = ref(false)
+
+const showPasswordModal = () => {
+  closeAvatarDropdown();
+  showPasswordModalFlag.value = true;
+  oldPassword.value = '';
+  newPassword.value = '';
+  confirmPassword.value = '';
+  passwordError.value = '';
+};
+
+const closePasswordModal = () => {
+  showPasswordModalFlag.value = false;
+};
+
+const submitPasswordChange = async () => {
+  if (!oldPassword.value || !newPassword.value || !confirmPassword.value) {
+    passwordError.value = '请填写所有字段';
+    return;
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = '新密码和确认密码不匹配';
+    return;
+  }
+
+  try {
+    isChangingPassword.value = true;
+    passwordError.value = '';
+
+    // 使用 JSON 格式传递数据
+    const res = await authAPI.updatePassword({
+      oldPassword: oldPassword.value,
+      newPassword: newPassword.value
+    });
+
+    if (res.code === 200) {
+      showNotification('密码修改成功', 'success');
+      closePasswordModal();
+    } else {
+      passwordError.value = res.msg || '密码修改失败';
+    }
+  } catch (error) {
+    console.error('密码修改失败:', error);
+    passwordError.value = '密码修改失败，请重试';
+  } finally {
+    isChangingPassword.value = false;
+  }
+};
 </script>
 
 <style src="./Chat.css" scoped></style>
+
+<style scoped>
+.avatar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  width: 160px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dark .avatar-dropdown {
+  background-color: #1f2937;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.dark .dropdown-item:hover {
+  background-color: #374151;
+}
+</style>

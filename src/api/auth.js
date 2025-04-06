@@ -143,6 +143,15 @@ export const authAPI = {
         return service.get(url)
     },
 
+    //修改密码
+    updatePassword: (data) => {
+        return service.put('/system/user/profile/updatePwd', data, {
+            headers: {
+                'Content-Type': 'application/json'  // 确保发送的是 JSON 数据
+            }
+        });
+    },
+
     // 登录方法
     login: (username, password, code, uuid) => {
         return service.post('/login', {

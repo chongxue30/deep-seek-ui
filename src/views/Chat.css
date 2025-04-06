@@ -4154,3 +4154,56 @@ button {
 .dark .course-card-footer .action-button.danger:hover {
   background-color: #7f1d1d;
 }
+
+/* Avatar dropdown styles */
+.avatar {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  width: 160px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+  background: white; /* 确保有背景色，避免透明 */
+  display: block; /* 明确设置显示样式 */
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  transition: background-color 0.2s;
+}
+
+
+/* Password modal specific styles */
+.password-modal {
+  max-width: 400px;
+}
+
+.error-message {
+  color: #e53935;
+  background-color: rgba(229, 57, 53, 0.1);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}

@@ -14,7 +14,8 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
       </div>
       <p class="empty-title">暂无课程</p>
-      <p class="empty-subtitle">您当前没有任何课程</p>
+      <p class="empty-subtitle" v-if="isTeacher">请前往工作台创建课程</p>
+      <p class="empty-subtitle" v-else>您当前没有任何课程</p>
     </div>
 
     <!-- 课程与对应会话列表 -->
@@ -125,6 +126,8 @@ const isLoadingCourses = ref(false)
 const expandedCourses = ref({}) // 追踪哪些课程被展开
 const selectedCourseId = ref('') // 当前选中的课程ID
 
+const isTeacher = ref(false) // 新增教师状态
+
 // 获取课程列表
 const fetchCourseList = async () => {
   try {
@@ -134,13 +137,10 @@ const fetchCourseList = async () => {
     const userInfoStr = localStorage.getItem('userInfo')
     const localUserInfo = userInfoStr ? JSON.parse(userInfoStr) : null
 
-    // 优先使用 props 中的用户信息，如果没有则使用本地存储的用户信息
     const effectiveUserInfo = props.userInfo || localUserInfo
 
-    console.log("有效用户信息:", effectiveUserInfo)
-
     // 判断用户类型
-    const isTeacher = effectiveUserInfo?.roles?.some(role => role.roleKey === 'tea')
+    isTeacher.value = effectiveUserInfo?.roles?.some(role => role.roleKey === 'tea')
     const isStudent = effectiveUserInfo?.roles?.some(role => role.roleKey === 'stu')
 
     console.log("是教师:", isTeacher, "是学生:", isStudent)

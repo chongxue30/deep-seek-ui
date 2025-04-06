@@ -236,7 +236,54 @@
           <p>加载学生名单中...</p>
         </div>
 
-        <div v-else-if="classStudents.length === 0" class="empty-state">
+        <div v-else-if="classStudents.length === 0" class="tudent-management">
+          <!-- 批量操作工具栏 -->
+          <div class="student-toolbar">
+            <!-- 搜索框 -->
+            <div class="student-search">
+              <div class="search-input-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+                </svg>
+                <input type="text" v-model="studentSearchKeyword" placeholder="搜索学生姓名或学号..." class="search-input" />
+                <button v-if="studentSearchKeyword" class="clear-search" @click="studentSearchKeyword = ''">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <!-- 移除、添加学生按钮 -->
+            <div class="student-actions-right">
+              <button
+                  v-if="selectedStudents.length > 0"
+                  class="action-button warning"
+                  @click="batchRemoveStudents"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                     class="lucide lucide-user-minus">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="16" x2="22" y1="11" y2="11"></line>
+                </svg>
+                批量移除 ({{ selectedStudents.length }})
+              </button>
+              &nbsp;
+              <button class="action-button primary" @click="showAddStudentsModal">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="19" x2="19" y1="8" y2="14"></line>
+                  <line x1="16" x2="22" y1="11" y2="11"></line>
+                </svg>
+                添加学生
+              </button>
+            </div>
+          </div>
+          <div class="empty-state ">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                class="lucide lucide-user-x">
@@ -246,15 +293,7 @@
             <line x1="22" x2="17" y1="8" y2="13"></line>
           </svg>
           <p>课程暂无学生</p>
-          <button class="action-button primary" @click="showAddStudentsModal" style="margin-top: 16px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-plus">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <line x1="19" x2="19" y1="8" y2="14"></line>
-              <line x1="16" x2="22" y1="11" y2="11"></line>
-            </svg>
-            添加学生
-          </button>
+          </div>
         </div>
 
         <div v-else class="student-management">

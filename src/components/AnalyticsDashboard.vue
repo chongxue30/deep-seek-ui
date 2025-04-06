@@ -18,7 +18,7 @@
           <el-icon><DataAnalysis /></el-icon>
         </div>
         <div class="logo-text">
-          <h1>数院AI系统 <span>分析平台</span></h1>
+          <h1>课程问答 <span>分析平台</span></h1>
         </div>
       </div>
       <div class="header-tabs">
