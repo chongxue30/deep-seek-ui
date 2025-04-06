@@ -1051,12 +1051,12 @@
               <div ref="studentComplexityChartRef" class="profile-chart"></div>
             </div>
             <div class="profile-chart-container">
-              <h3>学习进度分析</h3>
+              <h3>学情分析</h3>
               <div v-if="learningProgressItems.length > 0" class="learning-progress">
                 <div class="progress-item" v-for="(item, index) in learningProgressItems" :key="index">
                   <div class="progress-label">
                     <span>{{ item.label }}</span>
-                    <span>{{ item.value }}%</span>
+<!--                    <span>{{ item.value }}%</span>-->
                   </div>
                   <el-progress
                       :percentage="item.value"
