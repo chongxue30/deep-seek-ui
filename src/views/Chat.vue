@@ -1,3 +1,7 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+
 <template>
   <div class="chat-container" :class="{ 'dark': isDarkMode }">
     <!-- Sidebar -->
@@ -32,17 +36,17 @@
         </button>
 
         <!-- Toggle sidebar button (visible when sidebar is collapsed) -->
-<!--        <button v-if="isSidebarCollapsed" class="toggle-sidebar-btn" @click="toggleSidebar">-->
-<!--          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>-->
-<!--        </button>-->
+        <!--        <button v-if="isSidebarCollapsed" class="toggle-sidebar-btn" @click="toggleSidebar">-->
+        <!--          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>-->
+        <!--        </button>-->
 
         <!-- 学生切换班级按钮 -->
-<!--        <button v-if="isStudent && !isSidebarCollapsed" class="management-toggle-btn" @click="goToCourseSelection">-->
-<!--      <span class="toggle-icon">-->
-<!--        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
-<!--      </span>-->
-<!--          <span class="toggle-text">切换班级</span>-->
-<!--        </button>-->
+        <!--        <button v-if="isStudent && !isSidebarCollapsed" class="management-toggle-btn" @click="goToCourseSelection">-->
+        <!--      <span class="toggle-icon">-->
+        <!--        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
+        <!--      </span>-->
+        <!--          <span class="toggle-text">切换班级</span>-->
+        <!--        </button>-->
       </div>
 
       <!-- These sections should only show when sidebar is not collapsed -->
@@ -57,7 +61,6 @@
 
         <!-- Chat history -->
         <div class="sidebar-section">
-          <h3 class="section-title">对话历史</h3>
           <ChatHistory
               :current-conversation-id="currentConversation?.id"
               :user-info="userInfo"
@@ -263,74 +266,74 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
           知识库管理
         </button> -->
-<!--        <button-->
-<!--            class="admin-nav-item"-->
-<!--            :class="{ active: adminActiveTab === 'course' }"-->
-<!--            @click="adminActiveTab = 'course'"-->
-<!--        >-->
-<!--          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
-<!--          课程管理-->
-<!--        </button>-->
+        <!--        <button-->
+        <!--            class="admin-nav-item"-->
+        <!--            :class="{ active: adminActiveTab === 'course' }"-->
+        <!--            @click="adminActiveTab = 'course'"-->
+        <!--        >-->
+        <!--          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>-->
+        <!--          课程管理-->
+        <!--        </button>-->
       </div>
 
       <!-- 管理页面内容 -->
       <div class="admin-content">
         <!-- 知识库管理内容 -->
-<!--        <div v-if="adminActiveTab === 'knowledge'" class="admin-panel">-->
-<!--          <div class="admin-panel-header">-->
-<!--            <h3>知识库列表</h3>-->
-<!--            <button class="action-button primary" @click="showCreateKnowledgeBaseModal">-->
-<!--              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>-->
-<!--              创建知识库-->
-<!--            </button>-->
-<!--          </div>-->
+        <!--        <div v-if="adminActiveTab === 'knowledge'" class="admin-panel">-->
+        <!--          <div class="admin-panel-header">-->
+        <!--            <h3>知识库列表</h3>-->
+        <!--            <button class="action-button primary" @click="showCreateKnowledgeBaseModal">-->
+        <!--              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-plus"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>-->
+        <!--              创建知识库-->
+        <!--            </button>-->
+        <!--          </div>-->
 
-<!--          <div v-if="isLoadingKnowledgeBases" class="loading-container">-->
-<!--            <div class="loading-spinner"></div>-->
-<!--            <p>加载中...</p>-->
-<!--          </div>-->
+        <!--          <div v-if="isLoadingKnowledgeBases" class="loading-container">-->
+        <!--            <div class="loading-spinner"></div>-->
+        <!--            <p>加载中...</p>-->
+        <!--          </div>-->
 
-<!--          <div v-else-if="knowledgeBases.length === 0" class="empty-state">-->
-<!--            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>-->
-<!--            <p>暂无知识库，请点击上方按钮创建</p>-->
-<!--          </div>-->
+        <!--          <div v-else-if="knowledgeBases.length === 0" class="empty-state">-->
+        <!--            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>-->
+        <!--            <p>暂无知识库，请点击上方按钮创建</p>-->
+        <!--          </div>-->
 
-<!--          <div v-else class="knowledge-list">-->
-<!--            <div v-for="kb in knowledgeBases"-->
-<!--                 :key="kb.id"-->
-<!--                 class="knowledge-item">-->
-<!--              <div class="knowledge-info">-->
-<!--                <div class="knowledge-name">{{ kb.name }}</div>-->
-<!--                <div class="knowledge-details" v-if="kb.description || kb.document_count !== undefined">-->
-<!--                  <span v-if="kb.description" class="description">{{ kb.description }}</span>-->
-<!--                  <div class="stats">-->
-<!--                    <span v-if="kb.document_count !== undefined" class="document-count">-->
-<!--                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>-->
-<!--                      文档数: {{ kb.document_count }}-->
-<!--                    </span>-->
-<!--                    <span v-if="kb.word_count !== undefined" class="word-count">-->
-<!--                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-text"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path d="M15.1 18H3"></path></svg>-->
-<!--                      词数: {{ kb.word_count }}-->
-<!--                    </span>-->
-<!--                  </div>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--              <div class="knowledge-actions">-->
-<!--                <button class="action-button small" @click="showDocumentsModal(kb)">-->
-<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>-->
-<!--                  查看文档-->
-<!--                </button>-->
-<!--                <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">-->
-<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>-->
-<!--                  添加文档-->
-<!--                </button>-->
-<!--                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">-->
-<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>-->
-<!--                </button>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
+        <!--          <div v-else class="knowledge-list">-->
+        <!--            <div v-for="kb in knowledgeBases"-->
+        <!--                 :key="kb.id"-->
+        <!--                 class="knowledge-item">-->
+        <!--              <div class="knowledge-info">-->
+        <!--                <div class="knowledge-name">{{ kb.name }}</div>-->
+        <!--                <div class="knowledge-details" v-if="kb.description || kb.document_count !== undefined">-->
+        <!--                  <span v-if="kb.description" class="description">{{ kb.description }}</span>-->
+        <!--                  <div class="stats">-->
+        <!--                    <span v-if="kb.document_count !== undefined" class="document-count">-->
+        <!--                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>-->
+        <!--                      文档数: {{ kb.document_count }}-->
+        <!--                    </span>-->
+        <!--                    <span v-if="kb.word_count !== undefined" class="word-count">-->
+        <!--                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-text"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path d="M15.1 18H3"></path></svg>-->
+        <!--                      词数: {{ kb.word_count }}-->
+        <!--                    </span>-->
+        <!--                  </div>-->
+        <!--                </div>-->
+        <!--              </div>-->
+        <!--              <div class="knowledge-actions">-->
+        <!--                <button class="action-button small" @click="showDocumentsModal(kb)">-->
+        <!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-text"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><line x1="10" x2="8" y1="9" y2="9"></line></svg>-->
+        <!--                  查看文档-->
+        <!--                </button>-->
+        <!--                <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">-->
+        <!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-file-plus"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" x2="12" y1="18" y2="12"></line><line x1="9" x2="15" y1="15" y2="15"></line></svg>-->
+        <!--                  添加文档-->
+        <!--                </button>-->
+        <!--                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">-->
+        <!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>-->
+        <!--                </button>-->
+        <!--              </div>-->
+        <!--            </div>-->
+        <!--          </div>-->
+        <!--        </div>-->
 
         <!-- 课程管理内容 -->
         <div v-if="adminActiveTab === 'course'" class="admin-panel">
@@ -374,12 +377,11 @@
             <div v-else class="course-grid">
               <div v-for="classItem in classList"
                    :key="classItem.classId"
-                   class="course-card"
-                   @click="openCourseInNewPage(classItem)">
-                <div class="course-card-header">
+                   class="course-card">
+                <div class="course-card-header" @click="openCourseInNewPage(classItem)">
                   <h3 class="course-name">{{ classItem.className }}</h3>
                 </div>
-                <div class="course-card-body">
+                <div class="course-card-body" @click="openCourseInNewPage(classItem)">
                   <div class="course-stats">
                     <div class="course-stat">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -390,6 +392,16 @@
                       <span>{{ classItem.createTime }}</span>
                     </div>
                   </div>
+                </div>
+                <div class="course-card-footer">
+                  <button class="action-button small" @click.stop="editClass(classItem)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    修改
+                  </button>
+                  <button class="action-button small danger" @click.stop="deleteClass(classItem)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                    删除
+                  </button>
                 </div>
               </div>
             </div>
@@ -654,29 +666,29 @@
           </div>
 
           <!-- 分页控件 -->
-<!--          <div class="pagination">-->
-<!--            <button-->
-<!--                class="pagination-button"-->
-<!--                :disabled="currentPage === 1"-->
-<!--                @click="changePage(currentPage - 1)"-->
-<!--            >-->
-<!--              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>-->
-<!--              上一页-->
-<!--            </button>-->
+          <!--          <div class="pagination">-->
+          <!--            <button-->
+          <!--                class="pagination-button"-->
+          <!--                :disabled="currentPage === 1"-->
+          <!--                @click="changePage(currentPage - 1)"-->
+          <!--            >-->
+          <!--              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>-->
+          <!--              上一页-->
+          <!--            </button>-->
 
-<!--            <div class="pagination-info">-->
-<!--              第 {{ currentPage }} 页 / 共 {{ totalPages }} 页-->
-<!--            </div>-->
+          <!--            <div class="pagination-info">-->
+          <!--              第 {{ currentPage }} 页 / 共 {{ totalPages }} 页-->
+          <!--            </div>-->
 
-<!--            <button-->
-<!--                class="pagination-button"-->
-<!--                :disabled="currentPage === totalPages || totalPages === 0"-->
-<!--                @click="changePage(currentPage + 1)"-->
-<!--            >-->
-<!--              下一页-->
-<!--              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>-->
-<!--            </button>-->
-<!--          </div>-->
+          <!--            <button-->
+          <!--                class="pagination-button"-->
+          <!--                :disabled="currentPage === totalPages || totalPages === 0"-->
+          <!--                @click="changePage(currentPage + 1)"-->
+          <!--            >-->
+          <!--              下一页-->
+          <!--              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>-->
+          <!--            </button>-->
+          <!--          </div>-->
         </div>
       </div>
 
@@ -997,7 +1009,7 @@
     <div v-if="showClassForm" class="modal-backdrop" @click="closeClassForm"></div>
     <div v-if="showClassForm" class="modal-container create-class-form">
       <div class="modal-header">
-        <h3>创建新课程</h3>
+        <h3>{{ newClass.classId ? '修改课程' : '创建新课程' }}</h3>
         <button class="close-button" @click="closeClassForm">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
         </button>
@@ -1037,8 +1049,8 @@
             @click="submitCreateClass"
             :disabled="!newClass.className || !newClass.kzId || isCreatingClass"
         >
-          <span v-if="isCreatingClass">创建中...</span>
-          <span v-else>确认创建</span>
+          <span v-if="isCreatingClass">{{ newClass.classId ? '修改中...' : '创建中...' }}</span>
+          <span v-else>{{ newClass.classId ? '确认修改' : '确认创建' }}</span>
         </button>
       </div>
     </div>
@@ -1046,12 +1058,12 @@
     <!-- 登出确认弹窗 -->
     <div v-if="showLogoutConfirm" class="modal-backdrop" @click="cancelLogout"></div>
     <div v-if="showLogoutConfirm" class="modal-container logout-modal">
-<!--      <div class="modal-header">-->
-<!--        <h3>确认退出</h3>-->
-<!--        <button class="close-button" @click="cancelLogout">-->
-<!--          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>-->
-<!--        </button>-->
-<!--      </div>-->
+      <!--      <div class="modal-header">-->
+      <!--        <h3>确认退出</h3>-->
+      <!--        <button class="close-button" @click="cancelLogout">-->
+      <!--          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>-->
+      <!--        </button>-->
+      <!--      </div>-->
 
       <div class="modal-body">
         <div class="logout-warning">
@@ -1160,7 +1172,7 @@ const toggleSidebar = () => {
 // Add script to document for copying code
 onMounted(() => {
   if (!window.copyCodeToClipboard) {
-    window.copyCodeToClipboard = function(button) {
+    window.copyCodeToClipboard = (button) => {
       const codeBlock = button.closest('.code-block-wrapper').querySelector('code');
       const code = codeBlock.textContent;
 
@@ -1757,12 +1769,18 @@ const submitCreateClass = async () => {
     return
   }
 
+  // Determine if this is a create or update operation - moved outside try block
+  const isUpdate = !!newClass.value.classId
+
   try {
     isCreatingClass.value = true
     const token = localStorage.getItem('token')
 
-    const res = await fetch('/dev-api/system/class', {
-      method: 'POST',
+    const url = '/dev-api/system/class' // POST for create
+    const method = isUpdate ? 'PUT' : 'POST' // PUT for update
+
+    const res = await fetch(url, {
+      method: method,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -1771,21 +1789,21 @@ const submitCreateClass = async () => {
     })
 
     if (!res.ok) {
-      throw new Error('创建课程失败')
+      throw new Error(isUpdate ? '修改课程失败' : '创建课程失败')
     }
 
     const result = await res.json()
     if (result.code === 200) {
-      showNotification('课程创建成功', 'success')
+      showNotification(isUpdate ? '课程修改成功' : '课程创建成功', 'success')
       resetClassForm()
       closeClassForm()
       await getClassList() // 刷新课程列表
     } else {
-      throw new Error(result.msg || '创建课程失败')
+      throw new Error(result.msg || (isUpdate ? '修改课程失败' : '创建课程失败'))
     }
   } catch (error) {
-    console.error('创建课程失败:', error)
-    showNotification(`创建课程失败: ${error.message}`, 'error')
+    console.error(isUpdate ? '修改课程失败:' : '创建课程失败:', error)
+    showNotification(`${isUpdate ? '修改' : '创建'}课程失败: ${error.message}`, 'error')
   } finally {
     isCreatingClass.value = false
   }
@@ -2827,6 +2845,58 @@ onMounted(async () => {
   // 确保在组件卸载时停止语音播放
   window.addEventListener('beforeunload', stopSpeaking);
 });
+
+// Add these new methods to handle editing and deleting classes
+const editClass = async (classItem) => {
+  // Set the class to edit in the form
+  newClass.value = {
+    classId: classItem.classId,
+    className: classItem.className,
+    kzId: classItem.kzId || '',
+    teacherId: userInfo.value?.userId || '',
+    status: classItem.status || '0'
+  }
+
+  // Get course groups before showing the form
+  await getKzList()
+
+  // Show the class form for editing
+  showClassForm.value = true
+}
+
+const deleteClass = async (classItem) => {
+  if (!confirm(`确定要删除课程 "${classItem.className}" 吗？`)) {
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+
+    // Call the delete API endpoint
+    const res = await fetch(`/dev-api/system/class/${classItem.classId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('删除课程失败')
+    }
+
+    const result = await res.json()
+    if (result.code === 200) {
+      showNotification('课程删除成功', 'success')
+      // Refresh the class list
+      await getClassList()
+    } else {
+      throw new Error(result.msg || '删除课程失败')
+    }
+  } catch (error) {
+    console.error('删除课程失败:', error)
+    showNotification(`删除课程失败: ${error.message}`, 'error')
+  }
+}
 </script>
 
 <style src="./Chat.css" scoped></style>

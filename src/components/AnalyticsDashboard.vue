@@ -340,7 +340,7 @@
                 <el-icon><Calendar /></el-icon>
               </div>
               <div class="stat-details">
-                <div class="stat-value">{{ studentProfile.lastActiveTime }}</div>
+                <div class="stat-value">{{ formatISODate(studentProfile.lastActiveTime) }}</div>
                 <div class="stat-label">最后活跃</div>
               </div>
             </div>
@@ -357,7 +357,7 @@
                 <div class="progress-item" v-for="(item, index) in learningProgressItems" :key="index">
                   <div class="progress-label">
                     <span>{{ item.label }}</span>
-                    <span>{{ item.value }}%</span>
+<!--                    <span>{{ item.value }}%</span>-->
                   </div>
                   <el-progress
                       :percentage="item.value"
@@ -519,6 +519,32 @@ const statsData = computed(() => [
     trendData: trendData[3]
   }
 ]);
+
+// 格式化ISO日期字符串
+const formatISODate = (isoString) => {
+  if (!isoString) return '暂无记录';
+
+  try {
+    const date = new Date(isoString);
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) return isoString;
+
+    // 格式化为 YYYY-MM-DD HH:MM
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+
+    // 或者使用本地化格式（更友好但格式可能因浏览器设置而异）
+    // return date.toLocaleString();
+  } catch (e) {
+    console.error('日期格式化错误:', e);
+    return isoString;
+  }
+}
 
 // 生命周期钩子
 onMounted(() => {

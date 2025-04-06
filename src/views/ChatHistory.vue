@@ -3,15 +3,18 @@
     <h3 class="section-title">我的课程</h3>
 
     <!-- 课程加载中 -->
-    <div v-if="isLoadingCourses" class="loading-container-small">
-      <div class="loading-spinner-small"></div>
+    <div v-if="isLoadingCourses" class="loading-container">
+      <div class="loading-spinner"></div>
       <p>加载课程中...</p>
     </div>
 
     <!-- 无课程时的空态 -->
     <div v-else-if="courseList.length === 0" class="empty-state">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-      <p>暂无课程</p>
+      <div class="empty-icon-container">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+      </div>
+      <p class="empty-title">暂无课程</p>
+      <p class="empty-subtitle">您当前没有任何课程</p>
     </div>
 
     <!-- 课程与对应会话列表 -->
@@ -22,9 +25,8 @@
              :class="{ 'active': selectedCourseId === course.classId }"
              @click="toggleCourse(course.classId)">
           <div class="course-info">
-            <div class="expand-icon">
-              <svg v-if="expandedCourses[course.classId]" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <div class="expand-icon" :class="{ 'expanded': expandedCourses[course.classId] }">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </div>
             <div class="course-name">{{ course.className }}</div>
             <div class="course-count">{{ getConversationCount(course.classId) }}</div>
@@ -32,57 +34,61 @@
         </div>
 
         <!-- 课程对应的会话列表 -->
-        <div v-if="expandedCourses[course.classId]" class="conversation-list">
-          <!-- 会话列表 -->
-          <transition-group name="chat-item">
-            <div v-for="chat in getConversationsByClassId(course.classId)"
-                 :key="chat.id"
-                 class="chat-item"
-                 :class="{ 'active': chat.id === currentConversationId }"
-                 @click="selectChat(chat)">
-              <div class="chat-info">
-                <div class="chat-name">
-                  <span v-if="!isEditing[chat.id]">{{ chat.name }}</span>
-                  <input
-                      v-else
-                      type="text"
-                      v-model="editNames[chat.id]"
-                      @keyup.enter="saveRename(chat.id)"
-                      @blur="saveRename(chat.id)"
-                      @click.stop
-                      class="rename-input"
-                      ref="renameInput"
-                      autofocus
-                  />
+        <transition name="expand">
+          <div v-if="expandedCourses[course.classId]" class="conversation-list">
+            <!-- 会话列表 -->
+            <transition-group name="chat-item">
+              <div v-for="chat in getConversationsByClassId(course.classId)"
+                   :key="chat.id"
+                   class="chat-item"
+                   :class="{ 'active': chat.id === currentConversationId }"
+                   @click="selectChat(chat)">
+                <div class="chat-info">
+                  <div class="chat-name">
+                    <span v-if="!isEditing[chat.id]">{{ chat.name }}</span>
+                    <input
+                        v-else
+                        type="text"
+                        v-model="editNames[chat.id]"
+                        @keyup.enter="saveRename(chat.id)"
+                        @blur="saveRename(chat.id)"
+                        @click.stop
+                        class="rename-input"
+                        ref="renameInput"
+                        autofocus
+                    />
+                  </div>
+                  <div class="chat-time">{{ formatTime(chat.created_at) }}</div>
                 </div>
-                <div class="chat-time">{{ formatTime(chat.created_at) }}</div>
+                <div class="chat-actions">
+                  <button
+                      class="action-btn rename-btn"
+                      @click.stop="startRename(chat)"
+                      aria-label="重命名对话"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+                  </button>
+                  <button
+                      class="action-btn delete-btn"
+                      @click.stop="$emit('delete-conversation', chat.id)"
+                      aria-label="删除对话"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                  </button>
+                </div>
               </div>
-              <div class="chat-actions">
-                <button
-                    class="action-btn rename-btn"
-                    @click.stop="startRename(chat)"
-                    aria-label="Rename conversation"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
-                </button>
-                <button
-                    class="action-btn delete-btn"
-                    @click.stop="$emit('delete-conversation', chat.id)"
-                    aria-label="Delete conversation"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
-                </button>
-              </div>
-            </div>
-          </transition-group>
+            </transition-group>
 
-          <!-- 当前课程没有会话时的空态 -->
-          <div v-if="getConversationsByClassId(course.classId).length === 0" class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <p>{{ course.className }}暂无对话记录</p>
-            <p class="empty-hint">点击"新建对话"开始聊天</p>
+            <!-- 当前课程没有会话时的空态 -->
+            <div v-if="getConversationsByClassId(course.classId).length === 0" class="empty-state empty-state-small">
+<!--              <div class="empty-icon-container">-->
+<!--                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>-->
+<!--              </div>-->
+              <p class="empty-hint2">暂无对话记录</p>
+              <p class="empty-hint">点击"新建对话"开始聊天</p>
+            </div>
           </div>
-        </div>
+        </transition>
       </div>
     </div>
   </div>
@@ -119,7 +125,6 @@ const isLoadingCourses = ref(false)
 const expandedCourses = ref({}) // 追踪哪些课程被展开
 const selectedCourseId = ref('') // 当前选中的课程ID
 
-// 获取课程列表
 // 获取课程列表
 const fetchCourseList = async () => {
   try {
@@ -338,8 +343,6 @@ const fetchCourseList = async () => {
   }
 }
 
-
-
 // 修改切换课程的方法
 const toggleCourse = (courseId) => {
   // 检查当前点击的课程是否已展开
@@ -378,10 +381,9 @@ const toggleCourse = (courseId) => {
   }
 }
 
-// 获取指定课程下的会话数量 - 修正类型比较并添加调试日志
+// 获取指定课程下的会话数量
 const getConversationCount = (courseId) => {
   if (!props.conversations || !Array.isArray(props.conversations)) return 0
-
 
   // 确保类型一致进行比较
   const count = props.conversations.filter(chat =>
@@ -391,27 +393,22 @@ const getConversationCount = (courseId) => {
   return count
 }
 
-
-// 获取特定课程ID下的所有会话 - 修改比较逻辑
+// 获取特定课程ID下的所有会话
 const getConversationsByClassId = (classId) => {
   if (!props.conversations || !Array.isArray(props.conversations)) {
     return []
   }
 
-
   // 确保类型一致且使用严格比较
   const filtered = props.conversations.filter(chat => {
-
     return String(chat.class_id) === String(classId)
   })
   return filtered
 }
 
-
 // 初始化课程状态的改进
 const initCourseState = () => {
   if (courseList.value.length > 0) {
-
     // 初始化所有课程为未展开状态
     courseList.value.forEach(course => {
       expandedCourses.value[course.classId] = false
@@ -507,7 +504,6 @@ const selectChat = (chat) => {
   }
 }
 
-
 // 监听会话列表变化 - 确保新会话设置课程ID
 watch(
     () => props.conversations,
@@ -516,14 +512,12 @@ watch(
 
       // 如果是首次加载会话或会话数量有变化
       if (!oldConversations || oldConversations.length !== newConversations.length) {
-
         // 计算新增的会话
         const newlyAdded = oldConversations ?
             newConversations.filter(chat => !oldConversations.some(old => old.id === chat.id)) :
             newConversations;
 
         if (newlyAdded.length > 0) {
-
           // 为所有新会话设置当前选中的课程ID
           newlyAdded.forEach(chat => {
             if (!chat.class_id && selectedCourseId.value) {
@@ -536,7 +530,6 @@ watch(
     },
     { deep: true }
 )
-
 
 // 修改初始化函数，只在class_id不存在时才分配
 const initializeConversationsWithCourseId = () => {
@@ -569,7 +562,6 @@ const initializeConversationsWithCourseId = () => {
   }
 }
 
-
 // 组件挂载时获取课程列表
 onMounted(async () => {
   await fetchCourseList();
@@ -587,53 +579,168 @@ onMounted(async () => {
   margin-top: 0.5rem;
   overflow-y: auto;
   max-height: calc(100vh - 300px);
-  padding: 0.5rem;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
-/* 课程列表样式 */
-.courses-container {
-  margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-  padding-bottom: 0.5rem;
-}
-
+/* 标题样式 */
 .section-title {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 0.75rem;
+  color: #64748b;
+  margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  padding-left: 0.5rem;
 }
 
 :global(.dark) .section-title {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
-.course-list {
+/* 加载状态 */
+.loading-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid rgba(99, 102, 241, 0.1);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 空态样式 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  background-color: rgba(241, 245, 249, 0.5);
+  border-radius: 0.75rem;
+  border: 1px dashed #cbd5e1;
+}
+
+:global(.dark) .empty-state {
+  background-color: rgba(30, 41, 59, 0.5);
+  border-color: #334155;
+}
+
+.empty-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: rgba(99, 102, 241, 0.1);
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  color: #6366f1;
+}
+
+.empty-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.empty-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.empty-hint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+.empty-hint2 {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+
+:global(.dark) .empty-title {
+  color: #e2e8f0;
+}
+
+:global(.dark) .empty-subtitle {
+  color: #94a3b8;
+}
+
+.empty-state-small {
+  padding: 1.5rem 1rem;
+  margin-top: 0.5rem;
+  background-color: rgba(241, 245, 249, 0.3);
+}
+
+/* 课程列表样式 */
+.course-conversation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.course-section {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .course-header {
-  padding: 0.75rem 0.5rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: rgba(243, 244, 246, 0.7);
-  border: 1px solid transparent;
+  background-color: rgba(241, 245, 249, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .course-header {
+  background-color: rgba(30, 41, 59, 0.7);
+  border-color: rgba(51, 65, 85, 0.7);
 }
 
 .course-header:hover {
-  background-color: rgba(229, 231, 235, 0.7);
+  background-color: rgba(226, 232, 240, 0.8);
+  transform: translateY(-1px);
+}
+
+:global(.dark) .course-header:hover {
+  background-color: rgba(51, 65, 85, 0.8);
 }
 
 .course-header.active {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-left: 3px solid #3b82f6;
+  background-color: rgba(99, 102, 241, 0.1);
+  border-left: 3px solid #6366f1;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+:global(.dark) .course-header.active {
+  background-color: rgba(99, 102, 241, 0.15);
 }
 
 .course-info {
@@ -642,55 +749,77 @@ onMounted(async () => {
 }
 
 .expand-icon {
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: #4b5563;
-  transition: transform 0.2s ease;
+  color: #64748b;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded svg {
+  transform: rotate(180deg);
+}
+
+:global(.dark) .expand-icon {
+  color: #94a3b8;
 }
 
 .course-name {
   flex: 1;
   font-weight: 600;
   font-size: 0.9rem;
-  color: #111827;
+  color: #334155;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+:global(.dark) .course-name {
+  color: #e2e8f0;
+}
+
 .course-count {
-  background-color: rgba(209, 213, 219, 0.5);
-  color: #4b5563;
+  background-color: rgba(226, 232, 240, 0.7);
+  color: #475569;
   font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 9999px;
   font-weight: 500;
   min-width: 24px;
   text-align: center;
 }
 
-/* 会话组样式 */
-.conversation-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+:global(.dark) .course-count {
+  background-color: rgba(51, 65, 85, 0.7);
+  color: #cbd5e1;
 }
 
-.conversation-group {
+/* 会话列表样式 */
+.conversation-list {
+  margin-top: 0.5rem;
+  padding-left: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.conversation-group-header {
-  font-size: 0.75rem;
-  color: #6b7280;
-  padding: 0 0.5rem;
-  margin-bottom: 0.25rem;
+/* 展开动画 */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  max-height: 1000px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
 }
 
 .chat-item {
@@ -698,15 +827,19 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.7);
   position: relative;
   overflow: hidden;
+}
+
+:global(.dark) .chat-item {
+  background-color: rgba(30, 41, 59, 0.5);
+  border-color: rgba(51, 65, 85, 0.7);
 }
 
 .chat-item::before {
@@ -716,15 +849,19 @@ onMounted(async () => {
   left: 0;
   width: 3px;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
 
 .chat-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(241, 245, 249, 0.8);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .chat-item:hover {
+  background-color: rgba(51, 65, 85, 0.8);
 }
 
 .chat-item:hover::before {
@@ -732,8 +869,13 @@ onMounted(async () => {
 }
 
 .chat-item.active {
-  background-color: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
+  background-color: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+:global(.dark) .chat-item.active {
+  background-color: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .chat-item.active::before {
@@ -747,15 +889,25 @@ onMounted(async () => {
 }
 
 .chat-name {
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #334155;
+}
+
+:global(.dark) .chat-name {
+  color: #e2e8f0;
 }
 
 .chat-time {
   font-size: 0.7rem;
+  color: #64748b;
+}
+
+:global(.dark) .chat-time {
+  color: #94a3b8;
 }
 
 .chat-actions {
@@ -781,14 +933,17 @@ onMounted(async () => {
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: #64748b;
 }
 
+:global(.dark) .action-btn {
+  color: #94a3b8;
+}
 
 .rename-btn:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
 }
-
 
 .delete-btn:hover {
   background-color: rgba(239, 68, 68, 0.1);
@@ -799,72 +954,27 @@ onMounted(async () => {
   width: 100%;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #cbd5e1;
   font-size: 0.875rem;
   background-color: white;
-  color: #111827;
+  color: #334155;
+  outline: none;
+  transition: border-color 0.2s ease;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  font-size: 0.875rem;
-  text-align: center;
-  padding: 1rem;
-  margin-top: 0.5rem;
+.rename-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
-.empty-state svg {
-  margin-bottom: 0.75rem;
-  opacity: 0.5;
+:global(.dark) .rename-input {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
 }
 
-.empty-hint {
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
-  opacity: 0.7;
-}
-
-.empty-state-small {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  font-size: 0.8rem;
-}
-
-.empty-state-small svg {
-  margin-bottom: 0.5rem;
-  opacity: 0.5;
-}
-
-.loading-container-small {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  font-size: 0.8rem;
-}
-
-.loading-spinner-small {
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 2px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 0.5rem;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+:global(.dark) .rename-input:focus {
+  border-color: #6366f1;
 }
 
 /* 动画效果 */
@@ -896,82 +1006,5 @@ onMounted(async () => {
     margin: 0;
     padding: 0;
   }
-}
-
-
-
-.course-conversation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.course-section {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 0.5rem;
-}
-
-.course-header {
-  padding: 0.75rem 0.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: rgba(243, 244, 246, 0.7);
-  border: 1px solid transparent;
-}
-
-.course-header:hover {
-  background-color: rgba(229, 231, 235, 0.7);
-}
-
-.course-header.active {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-left: 3px solid #3b82f6;
-}
-
-.course-info {
-  display: flex;
-  align-items: center;
-}
-
-.expand-icon {
-  margin-right: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  color: #4b5563;
-  transition: transform 0.2s ease;
-}
-
-.course-name {
-  flex: 1;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #111827;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.course-count {
-  background-color: rgba(209, 213, 219, 0.5);
-  color: #4b5563;
-  font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 9999px;
-  font-weight: 500;
-  min-width: 24px;
-  text-align: center;
-}
-
-.conversation-list {
-  margin-top: 0.5rem;
-  padding-left: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 </style>
