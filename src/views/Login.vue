@@ -11,8 +11,8 @@
             <img src="../../public/favicon.png" alt="Logo" class="logo" />
             <div class="logo-glow"></div>
           </div>
-          <h1 class="title">数据 <span class="lowlight"> · </span><span class="highlight">AI导师</span></h1>
-          <p class="subtitle">智能对话，从这里开始</p>
+          <h1 class="title">AI <span class="lowlight"> · </span><span class="highlight">导师</span></h1>
+          <p class="subtitle">AI导师精准伴学，让知识触手可及</p>
         </div>
 
         <form class="login-form" @submit.prevent="handleLogin">
@@ -103,7 +103,7 @@
         </form>
 
         <div class="login-footer">
-          <p>© {{ new Date().getFullYear() }} IMUT Chat. All rights reserved.</p>
+          <p>© {{ new Date().getFullYear() }} 蒙ICP备2024012135号-1</p>
         </div>
       </div>
     </div>

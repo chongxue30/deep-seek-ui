@@ -89,9 +89,11 @@
     </aside>
 
     <div class="header-banner">
-      <h1 class="shimmer-title">AI导师 —— AI导师精准伴学，让知识触手可及</h1>
+      <h1 class="shimmer-title" style="display: flex; align-items: center;">
+        <span class="main-title">AI导师</span>
+        <span class="sub-title">&nbsp;—&nbsp;精准伴学，让知识触手可及</span>
+      </h1>
     </div>
-
     <!-- Main chat area -->
     <main v-if="!isAdminMode" class="chat-main" :class="{ 'fade-in': true }">
       <!-- 聊天界面 - 消息内容 -->

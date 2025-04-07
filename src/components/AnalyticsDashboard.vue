@@ -22,10 +22,10 @@
         </div>
       </div>
       <div class="header-tabs">
-        <div class="tab active">
-          <el-icon><DataAnalysis /></el-icon>
-          <span>数据分析</span>
-        </div>
+<!--        <div class="tab active">-->
+<!--          <el-icon><DataAnalysis /></el-icon>-->
+<!--          <span>数据分析</span>-->
+<!--        </div>-->
 <!--        <div class="tab">-->
 <!--          <el-icon><User /></el-icon>-->
 <!--          <span>学生管理</span>-->
@@ -49,24 +49,24 @@
             <span>刷新数据</span>
           </el-button>
         </el-tooltip>
-        <el-dropdown @command="handleCommand">
-          <el-button type="info" plain size="small" class="action-btn">
-            <el-icon><More /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="exportData">
-                <el-icon><Download /></el-icon> 导出数据
-              </el-dropdown-item>
-              <el-dropdown-item command="settings">
-                <el-icon><Setting /></el-icon> 设置
-              </el-dropdown-item>
-              <el-dropdown-item command="help">
-                <el-icon><QuestionFilled /></el-icon> 帮助
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+<!--        <el-dropdown @command="handleCommand">-->
+<!--          <el-button type="info" plain size="small" class="action-btn">-->
+<!--            <el-icon><More /></el-icon>-->
+<!--          </el-button>-->
+<!--          <template #dropdown>-->
+<!--            <el-dropdown-menu>-->
+<!--              <el-dropdown-item command="exportData">-->
+<!--                <el-icon><Download /></el-icon> 导出数据-->
+<!--              </el-dropdown-item>-->
+<!--              <el-dropdown-item command="settings">-->
+<!--                <el-icon><Setting /></el-icon> 设置-->
+<!--              </el-dropdown-item>-->
+<!--              <el-dropdown-item command="help">-->
+<!--                <el-icon><QuestionFilled /></el-icon> 帮助-->
+<!--              </el-dropdown-item>-->
+<!--            </el-dropdown-menu>-->
+<!--          </template>-->
+<!--        </el-dropdown>-->
       </div>
     </header>
 

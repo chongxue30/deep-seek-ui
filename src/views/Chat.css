@@ -4207,3 +4207,57 @@ button {
     opacity: 1;
   }
 }
+
+.header-banner {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: visible; /* 确保内容不被截断 */
+}
+
+.shimmer-title {
+  display: block; /* 改为块级元素，不使用flex布局 */
+  line-height: 1.4;
+  text-align: center; /* 文本左对齐 */
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  margin: 0; /* 移除默认边距 */
+  padding: 0; /* 移除默认内边距 */
+}
+
+.shimmer-title .main-title {
+  display: flex;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #2563eb;
+  letter-spacing: 0.5px;
+  position: relative;
+  padding: 0; /* 移除可能导致遮挡的内边距 */
+}
+
+.shimmer-title .sub-title {
+  display: flex;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+/* 简化的渐变效果，避免可能的渲染问题 */
+.shimmer-title .main-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          #3b82f6 50%,
+          rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% auto;
+  color: #fff; /* 备用颜色 */
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+  text-align: center;
+}
