@@ -1352,3 +1352,549 @@
   color: #6b7280;
   font-size: 14px;
 }
+
+/* 添加到你的 CSS 文件中 */
+.class-filter {
+  margin-right: 16px;
+}
+
+.multi-select-dropdown {
+  position: relative;
+  width: 220px;
+}
+
+.multi-select-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown-icon {
+  transition: transform 0.2s;
+}
+
+.dropdown-icon.open {
+  transform: rotate(180deg);
+}
+
+.multi-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.multi-select-all,
+.multi-select-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.multi-select-all:hover,
+.multi-select-option:hover {
+  background-color: #f5f7fa;
+}
+
+.multi-select-all input,
+.multi-select-option input {
+  margin-right: 8px;
+}
+
+.student-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .multi-select-dropdown {
+    width: 100%;
+  }
+
+  .student-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .class-filter,
+  .student-search,
+  .student-selection {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .student-actions-right {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+/* 文件夹列表样式 */
+.folder-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f9f9fb;
+  border: 1px solid #eaeaea;
+  transition: all 0.2s ease;
+}
+
+.folder-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  border-color: #d0d0d0;
+}
+
+.folder-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.folder-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.folder-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 文件列表样式 */
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: #f9f9fb;
+  border: 1px solid #eaeaea;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.file-date {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: auto;
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 上传区域样式 */
+.file-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  background-color: #f9f9fb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+  border-color: #3b82f6;
+  background-color: #f0f7ff;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.upload-hint {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: #f0f7ff;
+  border: 1px solid #d1e3ff;
+}
+
+.selected-file .file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selected-file .file-name {
+  font-weight: 500;
+}
+
+.selected-file .file-size {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+}
+
+.remove-file:hover {
+  color: #f56565;
+}
+
+/* 重命名弹窗样式 */
+.rename-modal {
+  max-width: 400px;
+}
+
+.rename-modal .form-group {
+  margin-bottom: 1rem;
+}
+
+.rename-modal .form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.rename-modal .form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* 文件夹列表样式优化 */
+.folder-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.folder-item {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.folder-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.folder-info {
+  padding: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.folder-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f7ff;
+  border-radius: 12px;
+  color: #3b82f6;
+}
+
+.folder-name {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1f2937;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-actions {
+  padding: 1rem;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* 文件列表样式优化 */
+.files-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.file-item {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.file-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.file-info {
+  padding: 1.25rem;
+  flex: 1;
+}
+
+.file-name {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.file-details {
+  display: flex;
+  gap: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.file-actions {
+  padding: 1rem;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* 空状态样式优化 */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state svg {
+  margin-bottom: 1rem;
+  color: #9ca3af;
+}
+
+.empty-state p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+/* 调整模态框层级 */
+.modal-backdrop {
+  z-index: 1000;
+}
+
+.modal-container {
+  z-index: 1001;
+}
+
+/* 重命名模态框特别提高层级 */
+.rename-modal {
+  z-index: 1100;
+}
+
+.rename-modal + .modal-backdrop {
+  z-index: 1099;
+}
+
+/* 确保文件列表模态框在下面 */
+.files-modal {
+  z-index: 1001;
+}
+
+.files-modal + .modal-backdrop {
+  z-index: 1000;
+}
+
+/* 修改文件夹名称和文件名称的样式 */
+.folder-name, .file-name {
+  max-width: 200px; /* 设置最大宽度 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+}
+
+/* 添加悬停时显示完整名称的样式 */
+.folder-name:hover::after, .file-name:hover::after {
+  content: attr(data-fullname);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+  white-space: normal;
+  max-width: 300px;
+  word-break: break-word;
+}
+
+/* 调整文件夹和文件列表的布局 */
+.folder-item, .file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+}
+
+.folder-info, .file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0; /* 确保flex布局下文本可以正确截断 */
+}
+
+/* 调整文件夹图标和名称的布局 */
+.folder-icon {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+/* 调整文件详情布局 */
+.file-details {
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+  min-width: 0; /* 确保flex布局下文本可以正确截断 */
+}
+
+/* 调整文件操作按钮的布局 */
+.folder-actions, .file-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 调整文件夹和文件信息布局为纵向排列 */
+.folder-info, .file-info {
+  display: flex;
+  flex-direction: column;  /* 改为纵向排列 */
+  justify-content: center;
+  flex: 1;
+  min-width: 0; /* 确保flex布局下文本可以正确截断 */
+}
+
+/* 调整文件夹和文件名称样式 */
+.folder-name, .file-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  font-weight: 500;  /* 加粗名称 */
+  margin-bottom: 4px; /* 添加底部间距 */
+}
+
+/* 调整创建时间样式 */
+.file-date {
+  color: #666;
+  font-size: 12px;  /* 减小字体大小 */
+  margin-top: 2px;  /* 添加上方间距 */
+}
+
+/* 调整文件详细信息的布局 */
+.file-details {
+  display: flex;
+  flex-direction: column;
+  margin-top: 2px;
+}
+
+/* 确保文件和文件夹项目的整体高度合适 */
+.folder-item, .file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  min-height: 60px; /* 确保有足够的高度容纳两行内容 */
+}
+
+/* 调整文件夹图标垂直对齐 */
+/*.folder-icon {*/
+/*  margin-right: 12px;*/
+/*  flex-shrink: 0;*/
+/*  align-self: flex-start;  !* 与顶部对齐 *!*/
+/*  margin-top: 2px;  !* 微调图标位置 *!*/
+/*}*/

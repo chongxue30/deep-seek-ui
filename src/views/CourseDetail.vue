@@ -92,81 +92,63 @@
         </div>
       </div>
 
+
       <!-- 知识库管理视图 -->
       <div v-if="activeTab === 'knowledge'" class="admin-panel">
         <div class="admin-panel-header">
-          <h3>知识库列表</h3>
-          <button class="action-button primary" @click="showCreateKnowledgeBaseModal">
+          <h3>知识库管理</h3>
+          <button class="action-button primary" @click="openCreateFolderModal">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                 class="lucide lucide-plus">
-              <path d="M5 12h14"></path>
-              <path d="M12 5v14"></path>
+                 class="lucide lucide-folder-plus">
+              <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+              <path d="M12 10v6"></path>
+              <path d="M9 13h6"></path>
             </svg>
-            创建知识库
+            新建文件夹
           </button>
         </div>
 
-        <div v-if="isLoadingKnowledgeBases" class="loading-container">
+        <div v-if="isLoadingFolders" class="loading-container">
           <div class="loading-spinner"></div>
           <p>加载中...</p>
         </div>
 
-        <div v-else-if="knowledgeBases.length === 0" class="empty-state">
+        <div v-else-if="folders.length === 0" class="empty-state">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                class="lucide lucide-folder">
-            <path
-                d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
           </svg>
-          <p>暂无知识库，请点击上方按钮创建</p>
+          <p>暂无文件夹，请点击上方按钮创建</p>
         </div>
 
-        <div v-else class="knowledge-list">
-          <div v-for="kb in knowledgeBases"
-               :key="kb.id"
-               class="knowledge-item">
-            <div class="knowledge-info">
-              <div class="knowledge-name">{{ kb.name }}</div>
-              <div class="knowledge-details" v-if="kb.description || kb.document_count !== undefined">
-                <span v-if="kb.description" class="description">{{ kb.description }}</span>
-                <div class="stats">
-                    <span v-if="kb.document_count !== undefined" class="document-count">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                           class="lucide lucide-file-text"><path
-                          d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline
-                          points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16"
-                                                                                                               x2="8"
-                                                                                                               y1="17"
-                                                                                                               y2="17"></line><line
-                          x1="10" x2="8" y1="9" y2="9"></line></svg>
-                      文档数: {{ kb.document_count }}
-                    </span>
-                  <span v-if="kb.word_count !== undefined" class="word-count">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                           class="lucide lucide-text"><path d="M17 6.1H3"></path><path d="M21 12.1H3"></path><path
-                          d="M15.1 18H3"></path></svg>
-                      词数: {{ kb.word_count }}
-                    </span>
-                </div>
+        <div v-else class="folder-list">
+          <div v-for="folder in folders" :key="folder.zskId" class="folder-item">
+            <div class="folder-info" @click="showFolderFiles(folder)">
+              <div class="folder-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                     class="lucide lucide-folder">
+                  <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                </svg>
+              </div>
+              <div class="folder-name" :data-fullname="folder.zskName">{{ folder.zskName }}</div>
+              <div class="file-details">
+                <span class="file-date">{{ folder.createTime }}</span>
               </div>
             </div>
-            <div class="knowledge-actions">
-              <button class="action-button small" @click="showDocumentsModal(kb)">
+            <div class="folder-actions">
+              <button class="action-button small" @click="openRenameModal(folder)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                     class="lucide lucide-file-text">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" x2="8" y1="13" y2="13"></line>
-                  <line x1="16" x2="8" y1="17" y2="17"></line>
-                  <line x1="10" x2="8" y1="9" y2="9"></line>
+                     class="lucide lucide-edit">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                  <path d="m15 5 4 4"></path>
                 </svg>
-                查看文档
+                重命名
               </button>
-              <button v-if="isTeacher" class="action-button small primary" @click="showAddDocumentModal(kb)">
+              <button class="action-button small" @click="showAddDocumentModal(folder)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                      class="lucide lucide-file-plus">
@@ -175,9 +157,9 @@
                   <line x1="12" x2="12" y1="18" y2="12"></line>
                   <line x1="9" x2="15" y1="15" y2="15"></line>
                 </svg>
-                添加文档
+                上传文档
               </button>
-              <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteKnowledgeBase(kb.id, kb.name)">
+              <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteFolder(folder)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                      class="lucide lucide-trash-2">
@@ -192,6 +174,139 @@
           </div>
         </div>
       </div>
+
+      <div v-if="showRenameModal" class="modal-backdrop" @click="closeRenameModal"></div>
+      <div v-if="showRenameModal" class="modal-container rename-modal">
+        <div class="modal-header">
+          <h3>重命名{{ renameType === 'folder' ? '文件夹' : '文件' }}</h3>
+          <button class="close-button" @click="closeRenameModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                 class="lucide lucide-x">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="rename-input">新名称</label>
+            <input
+                type="text"
+                id="rename-input"
+                v-model="newName"
+                placeholder="请输入新名称"
+                class="form-input"
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="action-button" @click="closeRenameModal">取消</button>
+          <button
+              class="action-button primary"
+              @click="confirmRename"
+              :disabled="!newName || isRenaming"
+          >
+            <span v-if="isRenaming">重命名中...</span>
+            <span v-else>确认重命名</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 文件列表弹窗 -->
+      <div v-if="showFilesModal" class="modal-backdrop" @click="closeFilesModal"></div>
+      <div v-if="showFilesModal" class="modal-container files-modal">
+        <div class="modal-header">
+          <h3>{{ currentFolder?.zskName }} 的文件</h3>
+          <button class="close-button" @click="closeFilesModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                 class="lucide lucide-x">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div v-if="isLoadingFiles" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+          </div>
+
+          <div v-else-if="files.length === 0" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                 class="lucide lucide-file-text">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" x2="8" y1="13" y2="13"></line>
+              <line x1="16" x2="8" y1="17" y2="17"></line>
+              <line x1="10" x2="8" y1="9" y2="9"></line>
+            </svg>
+            <p>暂无文件，请点击"上传文档"按钮添加</p>
+          </div>
+
+          <div v-else class="files-list">
+            <div v-for="file in files" :key="file.zskId" class="file-item">
+              <div class="file-info">
+                <div class="file-name" :data-fullname="file.zskName">{{ file.zskName }}</div>
+                <div class="file-details">
+                  <span class="file-date">{{ file.createTime }}</span>
+                </div>
+              </div>
+              <div class="file-actions">
+                <button class="action-button small" @click="openRenameModal(file)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                       class="lucide lucide-edit">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                    <path d="m15 5 4 4"></path>
+                  </svg>
+                  重命名
+                </button>
+<!--                <button class="action-button small" @click="viewFile(file)">-->
+<!--                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"-->
+<!--                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"-->
+<!--                       class="lucide lucide-eye">-->
+<!--                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>-->
+<!--                    <circle cx="12" cy="12" r="3"></circle>-->
+<!--                  </svg>-->
+<!--                  查看-->
+<!--                </button>-->
+                <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteFile(file)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                       class="lucide lucide-trash-2">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" x2="10" y1="11" y2="17"></line>
+                    <line x1="14" x2="14" y1="11" y2="17"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button v-if="isTeacher" class="action-button primary" @click="showAddDocumentModal(currentFolder)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                 class="lucide lucide-file-plus">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" x2="12" y1="18" y2="12"></line>
+              <line x1="9" x2="15" y1="15" y2="15"></line>
+            </svg>
+            上传文档
+          </button>
+        </div>
+      </div>
+
 
       <!-- 学生列表视图 -->
       <div v-if="activeTab === 'students'" class="student-list-view">
@@ -316,6 +431,28 @@
               </div>
             </div>
 
+            <!-- 班级筛选下拉框 -->
+            <div class="class-filter">
+              <div class="multi-select-dropdown">
+                <div class="multi-select-header" @click="toggleClassDropdown">
+                  <span>班级筛选: {{ selectedClassCount === uniqueClassNames.length ? '全部' : `已选 ${selectedClassCount}/${uniqueClassNames.length}` }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-icon" :class="{ 'open': showClassDropdown }">
+                    <path d="m6 9 6 6 6-6"/>
+                  </svg>
+                </div>
+                <div v-if="showClassDropdown" class="multi-select-options">
+                  <div class="multi-select-all">
+                    <input type="checkbox" id="select-all-classes" :checked="isAllClassesSelected" @change="toggleAllClasses"/>
+                    <label for="select-all-classes">全选</label>
+                  </div>
+                  <div v-for="className in uniqueClassNames" :key="className" class="multi-select-option">
+                    <input type="checkbox" :id="`class-${className}`" :checked="selectedClasses.includes(className)" @change="toggleClassSelection(className)" />
+                    <label :for="`class-${className}`">{{ className || '未分配班级' }}</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 全选按钮 -->
             <div class="student-selection">
               <input type="checkbox" id="select-all-students" :checked="selectAllStudents" @change="toggleSelectAllStudents" />
@@ -351,10 +488,10 @@
             </div>
           </div>
 
-          <!-- 学生卡片网格 -->
-          <div class="student-grid">
+          <!-- 学生卡片网格 - 使用过滤后的学生列表 -->
+          <div class="student-list-grid">
             <div
-                v-for="student in filteredStudents"
+                v-for="student in filteredByClassStudents"
                 :key="student.studentId"
                 class="student-card"
                 :class="{ 'selected': selectedStudents.includes(student.studentId) }"
@@ -378,7 +515,7 @@
                 <div class="student-name">{{ student.studentName }}</div>
                 <div class="student-details">
                   <span class="student-id">学号: {{ student.studentNo || student.studentId }}</span>
-                  <span class="student-class">班级: {{ student.className }}</span>
+                  <span v-if="student.className" class="student-class">班级: {{ student.className }}</span>
                 </div>
               </div>
 
@@ -395,13 +532,13 @@
             </div>
           </div>
 
-          <div v-if="filteredStudents.length === 0 && classStudents.length > 0" class="empty-search-result">
+          <div v-if="filteredByClassStudents.length === 0 && classStudents.length > 0" class="empty-search-result">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" x2="16.65" y1="21" y2="16.65"></line>
             </svg>
-            <p>没有找到匹配"{{ studentSearchKeyword }}"的学生</p>
+            <p>没有找到匹配的学生</p>
           </div>
 
           <!-- 分页控件 -->
@@ -617,20 +754,20 @@
             </svg>
             上传文件
           </button>
-          <button
-              class="tab-button"
-              :class="{ 'active': addDocTab === 'text' }"
-              @click="addDocTab = 'text'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                 class="lucide lucide-text">
-              <path d="M17 6.1H3"></path>
-              <path d="M21 12.1H3"></path>
-              <path d="M15.1 18H3"></path>
-            </svg>
-            手动输入
-          </button>
+<!--          <button-->
+<!--              class="tab-button"-->
+<!--              :class="{ 'active': addDocTab === 'text' }"-->
+<!--              @click="addDocTab = 'text'"-->
+<!--          >-->
+<!--            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"-->
+<!--                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"-->
+<!--                 class="lucide lucide-text">-->
+<!--              <path d="M17 6.1H3"></path>-->
+<!--              <path d="M21 12.1H3"></path>-->
+<!--              <path d="M15.1 18H3"></path>-->
+<!--            </svg>-->
+<!--            手动输入-->
+<!--          </button>-->
         </div>
 
         <!-- 上传文件 -->
@@ -755,6 +892,47 @@
         >
           <span v-if="isDeleting">删除中...</span>
           <span v-else>确认删除</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 创建文件夹弹窗 -->
+    <div v-if="showCreateFolderModal" class="modal-backdrop" @click="closeCreateFolderModal"></div>
+    <div v-if="showCreateFolderModal" class="modal-container create-modal">
+      <div class="modal-header">
+        <h3>创建文件夹</h3>
+        <button class="close-button" @click="closeCreateFolderModal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+               class="lucide lucide-x">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="folder-name">文件夹名称</label>
+          <input
+              type="text"
+              id="folder-name"
+              v-model="newFolder.name"
+              placeholder="请输入文件夹名称"
+              class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="action-button" @click="closeCreateFolderModal">取消</button>
+        <button
+            class="action-button primary"
+            @click="createFolder"
+            :disabled="!newFolder.name"
+        >
+          <span v-if="isCreatingFolder">创建中...</span>
+          <span v-else>确认创建</span>
         </button>
       </div>
     </div>
@@ -1144,7 +1322,7 @@
 </template>
 
 <script setup>
-import {ref, reactive, computed, onMounted, nextTick, watch} from 'vue'
+import {ref, reactive, computed, onMounted, nextTick, watch, onUnmounted} from 'vue'
 import {useRoute} from 'vue-router'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard.vue'
 
@@ -1229,6 +1407,293 @@ const manualStudentId = ref('')
 const manualStudentInfo = ref(null)
 const isSearchingStudent = ref(false)
 
+// 在 script setup 部分添加以下代码
+const showRenameModal = ref(false)
+const renameType = ref('') // 'folder' 或 'file'
+const itemToRename = ref(null)
+const newName = ref('')
+const isRenaming = ref(false)
+
+// 显示重命名弹窗
+const openRenameModal = (item, type) => {
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error')
+    return
+  }
+  renameType.value = type
+  itemToRename.value = item
+  newName.value = item.zskName
+  showRenameModal.value = true
+}
+
+// 关闭重命名弹窗
+const closeRenameModal = () => {
+  showRenameModal.value = false
+  renameType.value = ''
+  itemToRename.value = null
+  newName.value = ''
+}
+
+// 确认重命名
+// 修改 confirmRename 方法
+const confirmRename = async () => {
+  if (!itemToRename.value || !newName.value) return
+
+  try {
+    isRenaming.value = true
+    const token = localStorage.getItem('token')
+
+    const endpoint = renameType.value === 'folder'
+        ? `/dev-api/folder/rename/${itemToRename.value.zskId}`
+        : `/dev-api/folder/file/rename/${itemToRename.value.zskId}`
+
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        name: newName.value
+      })
+    })
+
+    const data = await res.text() // 先获取响应文本
+    if (res.ok) {
+      showNotification(`${renameType.value === 'folder' ? '文件夹' : '文件'}重命名成功`, 'success')
+      if (currentFolder.value && currentFolder.value.zskId) {
+        // 确保currentFolder存在再调用
+        console.log('getFilesByFolder')
+        await getFilesByFolder(currentFolder.value.zskId)
+      }else {
+        console.log('getFolders')
+        await getFolders()
+      }
+      closeRenameModal()
+    } else {
+      throw new Error(data || `${renameType.value === 'folder' ? '文件夹' : '文件'}重命名失败`)
+    }
+  } catch (error) {
+    console.error('重命名失败:', error)
+    showNotification(error.message || '重命名失败', 'error')
+  } finally {
+    isRenaming.value = false
+  }
+}
+
+
+
+// 知识库相关状态
+const folders = ref([])
+const files = ref([])
+const isLoadingFolders = ref(false)
+const isLoadingFiles = ref(false)
+const currentFolder = ref(null)
+const showFilesModal = ref(false)
+
+// 新增文件夹相关状态
+const newFolder = ref({
+  name: ''
+})
+const isCreatingFolder = ref(false)
+
+const showCreateFolderModal = ref(false)
+
+// 显示创建文件夹弹窗
+const openCreateFolderModal = () => {
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error')
+    return
+  }
+  showCreateFolderModal.value = true
+}
+
+// 关闭创建文件夹弹窗
+const closeCreateFolderModal = () => {
+  showCreateFolderModal.value = false
+  newFolder.value = {
+    name: ''
+  }
+}
+
+// 确认删除文件夹
+const confirmDeleteFolder = (folder) => {
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error')
+    return
+  }
+  deleteType.value = 'folder'
+  itemToDelete.value = {id: folder.zskId, name: folder.zskName}
+  showDeleteConfirm.value = true
+}
+
+// 确认删除文件
+const confirmDeleteFile = (file) => {
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error')
+    return
+  }
+  deleteType.value = 'file'
+  itemToDelete.value = {id: file.zskId, name: file.zskName}
+  showDeleteConfirm.value = true
+}
+
+// 查看文件内容
+const viewFile = (file) => {
+  // 这里可以添加查看文件内容的逻辑
+  showNotification('文件内容查看功能尚未实现', 'info')
+}
+
+
+// 获取文件夹列表
+const getFolders = async () => {
+  try {
+    isLoadingFolders.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/folder/list/${courseId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取文件夹列表失败')
+    }
+
+    const data = await res.json()
+    console.log('文件夹数据:', data) // 添加日志
+
+    if (Array.isArray(data)) {
+      folders.value = data
+    } else {
+      folders.value = []
+    }
+  } catch (error) {
+    console.error('获取文件夹列表失败:', error)
+    showNotification('获取文件夹列表失败', 'error')
+  } finally {
+    isLoadingFolders.value = false
+  }
+}
+
+// 获取文件夹下的文件列表
+const getFilesByFolder = async (folderId) => {
+  try {
+    isLoadingFiles.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/folder/files/${folderId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取文件列表失败')
+    }
+
+    const data = await res.json()
+    console.log('文件数据:', data) // 添加日志
+
+    // 修改这里，直接使用返回的数据，不需要检查data.data
+    if (Array.isArray(data)) {
+      files.value = data
+    } else {
+      files.value = []
+    }
+
+    console.log('files.value:', files.value) // 添加日志
+  } catch (error) {
+    console.error('获取文件列表失败:', error)
+    showNotification('获取文件列表失败', 'error')
+  } finally {
+    isLoadingFiles.value = false
+  }
+}
+
+// 显示文件夹文件列表
+const showFolderFiles = async (folder) => {
+  currentFolder.value = folder
+  showFilesModal.value = true
+  await getFilesByFolder(folder.zskId)
+}
+
+// 关闭文件列表弹窗
+const closeFilesModal = () => {
+  showFilesModal.value = false
+  currentFolder.value = null
+  files.value = []
+}
+
+
+
+// 删除文件夹
+const deleteFolder = async (folder) => {
+  try {
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/folder/delete/${folder.zskId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (res.ok) {
+      showNotification('删除文件夹成功', 'success')
+      await getFolders()
+    } else {
+      throw new Error('删除文件夹失败')
+    }
+  } catch (error) {
+    console.error('删除文件夹失败:', error)
+    showNotification('删除文件夹失败', 'error')
+  }
+}
+
+// 删除文件
+const deleteFile = async (file) => {
+  try {
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/folder/delete/${file.zskId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (res.ok) {
+      showNotification('删除文件成功', 'success')
+      await getFilesByFolder(currentFolder.value.zskId)
+    } else {
+      throw new Error('删除文件失败')
+    }
+  } catch (error) {
+    console.error('删除文件失败:', error)
+    showNotification('删除文件失败', 'error')
+  }
+}
+
+// 监听activeTab变化，加载相应数据
+watch(activeTab, (newVal) => {
+  if (newVal === 'students') {
+    getClassStudents()
+  } else if (newVal === 'knowledge') {
+    getFolders()
+  }
+})
+
+// 添加班级折叠状态管理
+const expandedClasses = ref({});
+
 // 新知识库表单
 const newKnowledgeBase = ref({
   name: '',
@@ -1293,6 +1758,132 @@ const filteredStudents = computed(() => {
       student.studentId?.toString().toLowerCase().includes(keyword)
   );
 });
+
+// 班级筛选相关
+const showClassDropdown = ref(false);
+const selectedClasses = ref([]);
+
+// 获取所有唯一的班级名称
+const uniqueClassNames = computed(() => {
+  const classNames = classStudents.value.map(student => student.className || '未分配班级');
+  return [...new Set(classNames)];
+});
+
+// 初始化选中所有班级
+watch(uniqueClassNames, (newClasses) => {
+  // 仅当selectedClasses为空时初始化（首次加载）
+  if (selectedClasses.value.length === 0 && newClasses.length > 0) {
+    selectedClasses.value = [...newClasses];
+  }
+}, { immediate: true });
+
+// 是否所有班级都被选中
+const isAllClassesSelected = computed(() => {
+  return selectedClasses.value.length === uniqueClassNames.value.length;
+});
+
+// 已选班级数量
+const selectedClassCount = computed(() => {
+  return selectedClasses.value.length;
+});
+
+// 切换班级下拉框显示
+const toggleClassDropdown = () => {
+  showClassDropdown.value = !showClassDropdown.value;
+};
+
+// 切换单个班级选择状态
+const toggleClassSelection = (className) => {
+  const index = selectedClasses.value.indexOf(className);
+  if (index === -1) {
+    selectedClasses.value.push(className);
+  } else {
+    selectedClasses.value.splice(index, 1);
+  }
+};
+
+// 切换全选班级
+const toggleAllClasses = () => {
+  if (isAllClassesSelected.value) {
+    selectedClasses.value = [];
+  } else {
+    selectedClasses.value = [...uniqueClassNames.value];
+  }
+};
+
+// 根据选中的班级和搜索关键词过滤学生
+const filteredByClassStudents = computed(() => {
+  // 首先按搜索关键词过滤
+  let result = filteredStudents.value;
+
+  // 如果没有选中任何班级，显示为空
+  if (selectedClasses.value.length === 0) {
+    return [];
+  }
+
+  // 然后按选中的班级过滤
+  return result.filter(student =>
+      selectedClasses.value.includes(student.className || '未分配班级')
+  );
+});
+
+// 点击其他区域关闭下拉框
+onMounted(() => {
+  // ... existing code ...
+
+  // 添加点击外部关闭班级下拉框的事件监听
+  document.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.multi-select-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+      showClassDropdown.value = false;
+    }
+  });
+});
+
+// 在组件卸载时移除事件监听
+onUnmounted(() => {
+  document.removeEventListener('click', () => {});
+});
+
+// 修改全选学生功能，只针对当前过滤后显示的学生
+const toggleSelectAllStudents = () => {
+  if (selectAllStudents.value) {
+    selectedStudents.value = [];
+  } else {
+    // 只选择当前过滤后显示的学生
+    selectedStudents.value = filteredByClassStudents.value.map(student => student.studentId);
+  }
+  selectAllStudents.value = !selectAllStudents.value;
+};
+//
+// // 添加按班级分组的计算属性
+// const groupedStudents = computed(() => {
+//   if (!filteredStudents.value.length) return {};
+//
+//   const groups = {};
+//
+//   filteredStudents.value.forEach(student => {
+//     const className = student.className || '未分配班级';
+//     if (!groups[className]) {
+//       groups[className] = [];
+//
+//       // 初始化折叠状态 - 默认展开第一个班级，其他折叠
+//       if (Object.keys(expandedClasses.value).length === 0) {
+//         expandedClasses.value[className] = true;
+//       } else if (expandedClasses.value[className] === undefined) {
+//         expandedClasses.value[className] = false;
+//       }
+//     }
+//     groups[className].push(student);
+//   });
+//
+//   return groups;
+// });
+//
+// // 切换班级折叠状态
+// function toggleClassGroup(className) {
+//   expandedClasses.value[className] = !expandedClasses.value[className];
+// }
 
 // 获取课程学生
 const getClassStudents = async () => {
@@ -1779,14 +2370,14 @@ const toggleStudentSelection = (studentId) => {
 }
 
 // 切换全选状态
-const toggleSelectAllStudents = () => {
-  if (selectAllStudents.value) {
-    selectedStudents.value = []
-  } else {
-    selectedStudents.value = classStudents.value.map(student => student.studentId)
-  }
-  selectAllStudents.value = !selectAllStudents.value
-}
+// const toggleSelectAllStudents = () => {
+//   if (selectAllStudents.value) {
+//     selectedStudents.value = []
+//   } else {
+//     selectedStudents.value = classStudents.value.map(student => student.studentId)
+//   }
+//   selectAllStudents.value = !selectAllStudents.value
+// }
 
 // 批量移除学生
 const batchRemoveStudents = async () => {
@@ -2078,12 +2669,13 @@ const closeDocsModal = () => {
 }
 
 // 显示添加文档弹窗
-const showAddDocumentModal = (kb) => {
+// 显示添加文档弹窗
+const showAddDocumentModal = (folder) => {  // 修改参数名
   if (!isTeacher.value) {
     showNotification('您没有权限执行此操作', 'error')
     return
   }
-  currentKnowledgeBase.value = kb
+  currentFolder.value = folder  // 使用currentFolder而不是currentKnowledgeBase
   addDocTab.value = 'upload'
   selectedFile.value = null
   newDocument.value = {
@@ -2092,6 +2684,7 @@ const showAddDocumentModal = (kb) => {
   }
   showAddDocModal.value = true
 }
+
 
 // 关闭添加文档弹窗
 const closeAddDocModal = () => {
@@ -2158,7 +2751,13 @@ const onFileSelected = (event) => {
 }
 
 // 提交添加文档
+// 提交添加文档
 const submitAddDocument = async () => {
+  if (!currentFolder.value || !currentFolder.value.zskId) {
+    showNotification('请先选择一个文件夹', 'error')
+    return
+  }
+
   if (addDocTab.value === 'upload' && !selectedFile.value) return
   if (addDocTab.value === 'text' && (!newDocument.value.name || !newDocument.value.text)) return
 
@@ -2170,20 +2769,30 @@ const submitAddDocument = async () => {
       // 创建FormData对象
       const formData = new FormData()
       formData.append('file', selectedFile.value)
-      formData.append('datasetId', currentKnowledgeBase.value.id)
+      formData.append('folderId', currentFolder.value.zskId) // 添加文件夹ID
 
-      // 添加固定的JSON数据
-      const processData = JSON.stringify({
-        indexing_technique: "economy",
+      // 添加处理规则数据
+      const processRule = {
+        indexing_technique: "high_quality",
         process_rule: {
-          mode: "automatic",
-          rules: {}
+          rules: {
+            pre_processing_rules: [
+              { id: "remove_extra_spaces", enabled: true },
+              { id: "remove_urls_emails", enabled: true }
+            ],
+            segmentation: {
+              separator: "###",
+              max_tokens: 500
+            }
+          },
+          mode: "custom"
         }
-      })
-      formData.append('data', processData)
+      }
+
+      formData.append('data', JSON.stringify(processRule))
 
       // 发送请求到后端API
-      const response = await fetch('/dev-api/document/createByFile', {
+      const response = await fetch('/dev-api/document/uploadToFolder', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -2192,32 +2801,31 @@ const submitAddDocument = async () => {
       })
 
       if (!response.ok) {
-        throw new Error(`上传失败: ${response.status}`)
+        const errorData = await response.json()
+        throw new Error(errorData.message || `上传失败: ${response.status}`)
       }
 
       showNotification('文件上传成功', 'success')
-      await getDocuments(currentKnowledgeBase.value.id)
+      await getFilesByFolder(currentFolder.value.zskId)
       closeAddDocModal()
     } else {
       // 手动输入文本创建文档
-      const res = await fetch('/dev-api/document/create', {
+      const res = await fetch('/dev-api/document/createToFolder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          datasetId: currentKnowledgeBase.value.id,
+          folderId: currentFolder.value.id, // 这里也需要修改
           name: newDocument.value.name,
-          text: newDocument.value.text,
-          indexingTechnique: 'economy',
-          processRule: {mode: 'automatic'}
+          text: newDocument.value.text
         })
       })
 
       if (res.ok) {
         showNotification('文档创建成功', 'success')
-        await getDocuments(currentKnowledgeBase.value.id)
+        await getDocuments(currentFolder.value.id) // 这里也需要修改
         closeAddDocModal()
       } else {
         throw new Error('文档创建失败')
@@ -2308,6 +2916,7 @@ const cancelDelete = () => {
 }
 
 // 确认删除
+// 确认删除
 const confirmDelete = async () => {
   if (!itemToDelete.value.id) return
 
@@ -2331,7 +2940,7 @@ const confirmDelete = async () => {
       } else {
         throw new Error('删除知识库失败')
       }
-    } else {
+    } else if (deleteType.value === 'doc') {
       // 删除文档
       const res = await fetch('/dev-api/document/delete', {
         method: 'POST',
@@ -2351,6 +2960,38 @@ const confirmDelete = async () => {
       } else {
         throw new Error('删除文档失败')
       }
+    } else if (deleteType.value === 'folder') {
+      // 删除文件夹
+      const res = await fetch(`/dev-api/folder/delete/${itemToDelete.value.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (res.ok) {
+        showNotification(`文件夹 "${itemToDelete.value.name}" 已删除`, 'success')
+        await getFolders()
+      } else {
+        throw new Error('删除文件夹失败')
+      }
+    } else if (deleteType.value === 'file') {
+      // 删除文件
+      const res = await fetch(`/dev-api/folder/file/delete/${itemToDelete.value.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (res.ok) {
+        showNotification(`文件 "${itemToDelete.value.name}" 已删除`, 'success')
+        await getFilesByFolder(currentFolder.value.zskId)
+      } else {
+        throw new Error('删除文件失败')
+      }
     }
 
     showDeleteConfirm.value = false
@@ -2361,6 +3002,52 @@ const confirmDelete = async () => {
     isDeleting.value = false
   }
 }
+
+// 创建文件夹
+const createFolder = async () => {
+  if (!newFolder.value.name) return
+
+  try {
+    isCreatingFolder.value = true
+    const token = localStorage.getItem('token')
+
+    // 获取用户ID
+    let teacherId = null
+    const userInfoStr = localStorage.getItem('userInfo')
+    let userInfo = null
+    if (userInfoStr) {
+      userInfo = JSON.parse(userInfoStr)
+      teacherId = userInfo.userId || userInfo.teacherId || null
+    }
+
+    const res = await fetch('/dev-api/folder/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        zskName: newFolder.value.name,
+        classId: courseId,
+        teacherId: teacherId
+      })
+    })
+
+    if (res.ok) {
+      showNotification('创建文件夹成功', 'success')
+      await getFolders()
+      closeCreateFolderModal()
+    } else {
+      throw new Error('创建文件夹失败')
+    }
+  } catch (error) {
+    console.error('创建文件夹失败:', error)
+    showNotification('创建文件夹失败', 'error')
+  } finally {
+    isCreatingFolder.value = false
+  }
+}
+
 
 // 显示通知
 const showNotification = (message, type = 'info') => {

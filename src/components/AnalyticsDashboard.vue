@@ -400,10 +400,10 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } 
 // 引入外部样式文件
 import '@/assets/styles/dashboard.scss';
 import * as echarts from 'echarts';
+import CountTo from 'vue-count-to'
 import { ElMessage, ElNotification} from 'element-plus';
 import {
-  DataAnalysis, User, Setting, Refresh, More, Download,
-  QuestionFilled, CaretTop, CaretBottom, Minus, PieChart, FullScreen,
+  DataAnalysis, User, Refresh, More, CaretTop, CaretBottom, Minus, PieChart, FullScreen,
   TrendCharts, Collection, ChatDotRound, Search, Calendar, WarningFilled
 } from '@element-plus/icons-vue';
 import {
@@ -424,6 +424,11 @@ const props = defineProps({
     default: null
   }
 });
+
+// 注册组件
+const components = {
+  CountTo
+}
 
 // 状态
 const statistics = ref({
@@ -508,14 +513,14 @@ const statsData = computed(() => [
     label: '学科分类',
     value: statistics.value.totalSubjects || 0,
     icon: 'Collection',
-    trend: 0,
+    trend: 2,
     trendData: trendData[2]
   },
   {
     label: '今日提问',
     value: statistics.value.todayQuestions || 0,
     icon: 'DataAnalysis',
-    trend: -5,
+    trend: 5,
     trendData: trendData[3]
   }
 ]);
@@ -744,24 +749,24 @@ function onKeywordLeave(e) {
 }
 
 // 下拉菜单命令处理
-function handleCommand(command) {
-  if (command === 'exportData') {
-    ElMessage({
-      message: '数据导出功能即将上线',
-      type: 'info'
-    });
-  } else if (command === 'settings') {
-    ElMessage({
-      message: '设置功能即将上线',
-      type: 'info'
-    });
-  } else if (command === 'help') {
-    ElMessage({
-      message: '帮助文档即将上线',
-      type: 'info'
-    });
-  }
-}
+// function handleCommand(command) {
+//   if (command === 'exportData') {
+//     ElMessage({
+//       message: '数据导出功能即将上线',
+//       type: 'info'
+//     });
+//   } else if (command === 'settings') {
+//     ElMessage({
+//       message: '设置功能即将上线',
+//       type: 'info'
+//     });
+//   } else if (command === 'help') {
+//     ElMessage({
+//       message: '帮助文档即将上线',
+//       type: 'info'
+//     });
+//   }
+// }
 
 // 显示学生画像
 function showStudentProfile(userName) {
@@ -799,12 +804,16 @@ function getDashboardData() {
     getHotKeywords(props.classId),
     getActiveStudents(props.classId)
   ]).then(([statsRes, questionTypesRes, subjectsRes, complexityRes, dailyTrendRes, hotKeywordsRes, activeStudentsRes]) => {
-    if (statsRes.code === 200) statistics.value = statsRes.data || {
-      totalQuestions: 0,
-      totalStudents: 0,
-      totalSubjects: 0,
-      todayQuestions: 0
-    };
+    if (statsRes.code === 200) {
+      // 确保明确赋值每个属性，避免整体赋值可能导致的引用问题
+      statistics.value.totalQuestions = statsRes.data.totalQuestions || 0;
+      statistics.value.totalStudents = statsRes.data.totalStudents || 0;
+      statistics.value.totalSubjects = statsRes.data.totalSubjects || 0;
+      statistics.value.todayQuestions = statsRes.data.todayQuestions || 0;
+
+      // 输出调试信息
+      console.log('统计数据已更新:', statistics.value);
+    }
 
     if (questionTypesRes.code === 200) {
       questionTypes.value = questionTypesRes.data || [];
