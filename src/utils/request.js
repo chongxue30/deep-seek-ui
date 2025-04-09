@@ -32,6 +32,7 @@ service.interceptors.response.use(
         console.log('===进入响应拦截器===')
         const res = response.data
         console.log('响应数据:', res)
+        console.log('响应数据类型:', typeof res)
 
         // 检查接口返回的状态码
         if (res.code && res.code !== 200) {
@@ -41,6 +42,14 @@ service.interceptors.response.use(
                 console.log('🔴 检测到401状态码')
                 // 删除测试用的alert
                 return handleTokenExpired()
+            }else if (res.code === 401 || res.code === 403) {
+                router.push({
+                    path: '/login',
+                    query: {
+                        message: '权限验证失败，请重新登录',
+                        code: res.code.toString()
+                    }
+                })
             }
 
             // 其他错误情况显示错误信息

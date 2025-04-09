@@ -153,7 +153,7 @@ const fetchCourseList = async () => {
     }
 
     // 根据角色获取课程
-    if (isTeacher) {
+    if (isTeacher.value) {
       // 教师获取课程
       const userId = effectiveUserInfo?.userId || ''
 
