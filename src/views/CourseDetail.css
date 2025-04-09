@@ -1898,3 +1898,32 @@
 /*  align-self: flex-start;  !* 与顶部对齐 *!*/
 /*  margin-top: 2px;  !* 微调图标位置 *!*/
 /*}*/
+
+/* 修改班级筛选下拉框中文本的样式 */
+.multi-select-header span {
+  font-size: 14px;  /* 与搜索框字体大小一致 */
+  color: #64748b;   /* 灰色，与搜索框中的颜色一致 */
+}
+
+/* 为了保持整体外观一致，也可以调整下拉框的其他样式 */
+.multi-select-header {
+  padding: 10px 12px; /* 调整内边距，使高度与搜索框更接近 */
+  background-color: #f8fafc; /* 与搜索框背景色一致 */
+}
+
+/* 调整下拉框显示班级名称的样式 */
+.multi-select-header {
+  padding: 10px 12px;
+  background-color: #f8fafc;
+  min-height: 40px; /* 确保高度一致 */
+}
+
+.multi-select-header span {
+  font-size: 14px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px; /* 控制文本长度，防止过长 */
+  display: inline-block;
+}
