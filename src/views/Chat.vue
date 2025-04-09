@@ -2150,12 +2150,19 @@ const generateId = () => {
   return Math.random().toString(36).substr(2, 9)
 }
 
+// 创建一个可以中止的控制器
+const abortController = ref(null);
+
 const isSendingMessage = ref(false);
 
 const sendMessage = async () => {
-  if (!inputMessage.value.trim() || isLoading.value) return;  // Add isLoading check to prevent sending while loading
+  // if (!inputMessage.value.trim() || isLoading.value) return;
+  if (!inputMessage.value.trim()) return;
 
   isSendingMessage.value = true;  // 设置为正在发送消息
+
+  // 创建新的 AbortController
+  abortController.value = new AbortController();
 
   // Add user message
   const messageId = generateId();
@@ -2222,7 +2229,8 @@ const sendMessage = async () => {
         user: userInfo.value.userName,
         responseMode: "streaming",
         classId: selectedCourseId // 使用从 localStorage 获取的课程 ID
-      })
+      }),
+      signal: abortController.value.signal // 添加此行
     });
 
 
@@ -2318,17 +2326,21 @@ const sendMessage = async () => {
       updateCurrentConversation(newConversationId);
     }
   } catch (error) {
-    console.error('Failed to send message:', error);
-    isLoading.value = false;
-    currentMessageId.value = null;
+    if (error.name === 'AbortError') {
+      console.log('请求被中止');
+    }else {
+      console.error('Failed to send message:', error);
+      isLoading.value = false;
+      currentMessageId.value = null;
 
-    // If request failed, remove AI message
-    messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
+      // If request failed, remove AI message
+      messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
 
-    // 如果错误是关于课程选择，重定向到课程选择页面
-    if (error.message.includes('请先选择一个课程')) {
-      alert('请先选择一个课程');
-      router.push('/course-selection');
+      // 如果错误是关于课程选择，重定向到课程选择页面
+      if (error.message.includes('请先选择一个课程')) {
+        alert('请先选择一个课程');
+        router.push('/course-selection');
+      }
     }
   }finally {
     isSendingMessage.value = false;  // 响应完成，允许发送新消息
@@ -2354,10 +2366,34 @@ const updateCurrentConversation = async (conversationId) => {
     console.log('Updated current conversation:', conversation);
   }
 }
+// 增强版 stopResponse 函数
 const stopResponse = () => {
+  // 中止请求
+  if (abortController.value) {
+    abortController.value.abort();
+    abortController.value = null;
+  }
+
+  // 重置状态
+  isSendingMessage.value = false;
   isLoading.value = false;
+
+  // 如果想要移除当前正在生成的消息，可以这样做
+  if (currentMessageId.value) {
+    // 方案1: 完全移除该消息
+    // messages.value = messages.value.filter(msg => msg.id !== currentMessageId.value);
+
+    // 或者方案2: 标记该消息为已中断（可以添加一个视觉提示）
+    const index = messages.value.findIndex(msg => msg.id === currentMessageId.value);
+    if (index !== -1) {
+      messages.value[index].content += "\n\n[回复已中断]";
+      messages.value[index].interrupted = true; // 可以添加样式标记
+    }
+  }
+
   currentMessageId.value = null;
-  // Implement actual stop logic here
+
+  console.log("响应已停止，连接已断开");
 }
 
 const handleSuggestedQuestion = (question) => {

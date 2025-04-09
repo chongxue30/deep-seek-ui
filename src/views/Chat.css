@@ -4261,3 +4261,8 @@ button {
   animation: shimmer 3s linear infinite;
   text-align: center;
 }
+
+.message.interrupted .message-content {
+  opacity: 0.7;
+  border-left: 3px solid #ff6b6b;
+}
