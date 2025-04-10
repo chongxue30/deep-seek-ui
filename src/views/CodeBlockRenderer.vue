@@ -178,44 +178,124 @@ const preprocessContent = (content) => {
   processedContent = processedContent.replace(/TEXT\s*/g, '');
   processedContent = processedContent.replace(/复制代码\s*/g, '');
 
-  // 2. 分步骤处理不同的代码块模式
+  // 2. 识别特定编程语言模式并标记代码块
 
-  // 步骤A: 处理"这是X语言实现："模式
+  // 2.1 处理Go语言代码 - 识别package/import/func模式
+  const goPattern = /(package\s+\w+|import\s+(?:"[\w\/]+"|\([\s\S]*?\))|func\s+\w+\s*\([^)]*\)[\s\S]*?\{)/g;
+  if (goPattern.test(processedContent)) {
+    // 找到语言描述行
+    const goHeaderMatch = processedContent.match(/(Go|Golang)(?:语言)?(?:冒泡排序|算法|实现|代码).*?(?:：|:)/i);
+
+    if (goHeaderMatch) {
+      const headerEndPos = goHeaderMatch.index + goHeaderMatch[0].length;
+      // 从描述后提取代码内容直到明显的分隔符
+      const codeMatch = processedContent.substring(headerEndPos).match(/\s*([\s\S]*?)(?=\n\n核心技术点|\n\n注：|\n\n\w+|\n复制\n播放|$)/);
+
+      if (codeMatch) {
+        const codeContent = codeMatch[1].trim();
+        // 构建代码块
+        const beforeCode = processedContent.substring(0, headerEndPos);
+        const afterCode = processedContent.substring(headerEndPos + codeMatch[0].length);
+
+        processedContent = beforeCode + '\n```go\n' + codeContent + '\n```\n' + afterCode;
+      }
+    } else {
+      // 如果没有明确的语言头，尝试直接包装看起来像Go代码的部分
+      processedContent = processedContent.replace(
+          /(package\s+\w+[\s\S]*?func\s+main\s*\(\)[\s\S]*?\})\s*(?=\n\n|$)/g,
+          (match) => {
+            return '```go\n' + match.trim() + '\n```\n';
+          }
+      );
+    }
+  }
+
+  // 2.2 识别SQL代码块
+  const sqlPattern = /(?:CREATE DATABASE|CREATE TABLE|INSERT INTO|SELECT|UPDATE|DELETE|USE|ALTER)[\s\S]*?;/gi;
+  let match;
+  const sqlBlocks = [];
+
+  while ((match = sqlPattern.exec(processedContent)) !== null) {
+    const startIdx = match.index;
+    const endIdx = match.index + match[0].length;
+
+    // 寻找段落的实际开始位置
+    let blockStart = startIdx;
+    while (blockStart > 0 && processedContent[blockStart-1] !== '\n') {
+      blockStart--;
+    }
+
+    // 检查是否是带有注释的SQL块
+    const prefix = processedContent.substring(blockStart, startIdx).trim();
+    if (prefix.startsWith('–') || prefix.startsWith('--')) {
+      sqlBlocks.push({
+        start: blockStart,
+        end: endIdx,
+        text: processedContent.substring(blockStart, endIdx)
+      });
+    } else if (prefix === '') {
+      sqlBlocks.push({
+        start: startIdx,
+        end: endIdx,
+        text: match[0]
+      });
+    }
+  }
+
+  // 合并相邻的SQL块
+  const mergedBlocks = [];
+  for (let i = 0; i < sqlBlocks.length; i++) {
+    if (i > 0 && sqlBlocks[i].start - sqlBlocks[i-1].end < 10) {
+      mergedBlocks[mergedBlocks.length-1].end = sqlBlocks[i].end;
+      mergedBlocks[mergedBlocks.length-1].text += '\n' + sqlBlocks[i].text;
+    } else {
+      mergedBlocks.push(sqlBlocks[i]);
+    }
+  }
+
+  // 从后往前替换SQL块
+  mergedBlocks.sort((a, b) => b.start - a.start);
+  for (const block of mergedBlocks) {
+    const before = processedContent.substring(0, block.start);
+    const after = processedContent.substring(block.end);
+    processedContent = before + '\n```sql\n' + block.text.trim() + '\n```\n' + after;
+  }
+
+  // 3. 处理其他常见语言模式
+
+  // 3.1 处理"这是X语言实现："模式
   processedContent = processedContent.replace(
-      /(这是|这是一个)?(\w+\+*#*)\s*(实现|冒泡排序|算法|代码|示例).*?[：:]\s*\n+([\s\S]*?)(?=\n\n注：|\n\n核心|\n\n\w+|\n\n这是|\n复制\n播放|\n\n$|$)/gi,
-      (match, prefix, lang, type, code) => {
-        // 确保代码不为空
+      /(这是|这是一个)?(C\+\+|Java|Python|JavaScript|C#|Go|Ruby|PHP|Swift|Kotlin|Scala|SQL|Bash|Shell|XML|JSON|YAML|Markdown|CSS|HTML)([^`]*?)(?:实现|冒泡排序|算法|代码|示例).*?[：:]\s*\n+([\s\S]*?)(?=\n\n注：|\n\n核心|\n\n\w+|\n\n这是|\n复制\n播放|\n\n$|$)/gi,
+      (match, prefix, lang, desc, code) => {
         if (!code.trim()) return match;
 
-        // 确定语言标识符
         let langId = lang.toLowerCase();
         if (langId === 'c++') langId = 'cpp';
         if (langId === 'c#') langId = 'csharp';
+        if (langId === 'golang') langId = 'go';
 
-        // 去除可能的语言标识符行
-        let cleanCode = code.replace(/^(CPP|JAVA|PYTHON|JS|C\+\+)\s*\n+/i, '');
+        let cleanCode = code.replace(/^(CPP|JAVA|PYTHON|JS|C\+\+|GO)\s*\n+/i, '');
 
-        return `这是${lang}${type}：\n\`\`\`${langId}\n${cleanCode.trim()}\n\`\`\`\n\n`;
+        return `${prefix || ''}${lang}${desc}：\n\`\`\`${langId}\n${cleanCode.trim()}\n\`\`\`\n\n`;
       }
   );
 
-  // 步骤B: 处理独立的大写语言标识符
+  // 3.2 处理独立的语言标识符行
   processedContent = processedContent.replace(
-      /\n(CPP|JAVA|PYTHON|JS|JAVASCRIPT|CSHARP|C#|GO)\s*\n+([\s\S]*?)(?=\n\n注：|\n\n核心|\n\n\w+|\n\n这是|\n复制\n播放|\n\n$|$)/gi,
+      /\n(CPP|JAVA|PYTHON|JS|JAVASCRIPT|CSHARP|C#|GO|GOLANG|RUBY|PHP|SWIFT|KOTLIN|SCALA|SQL|BASH|SHELL|XML|JSON|YAML|MARKDOWN|CSS|HTML)\s*\n+([\s\S]*?)(?=\n\n注：|\n\n核心|\n\n\w+|\n\n这是|\n复制\n播放|\n\n$|$)/gi,
       (match, lang, code) => {
-        // 确保代码不为空
         if (!code.trim()) return match;
 
-        // 确定语言标识符
         let langId = lang.toLowerCase();
         if (langId === 'c#') langId = 'csharp';
         if (langId === 'javascript') langId = 'js';
+        if (langId === 'golang') langId = 'go';
 
         return `\n\`\`\`${langId}\n${code.trim()}\n\`\`\`\n\n`;
       }
   );
 
-  // 3. 确保所有代码块都有闭合标记
+  // 4. 确保所有代码块都有闭合标记
   let lines = processedContent.split('\n');
   let inCodeBlock = false;
 
@@ -235,40 +315,6 @@ const preprocessContent = (content) => {
 };
 
 
-
-//   // // 5. 处理被分割的代码块，中间有TEXT和复制代码标记
-//   // processedContent = processedContent.replace(
-//   //     /(\n|^)(cpp|java|python|javascript|c\+\+|js|py|c#|csharp)\s+([^`]*?)(\s*TEXT\s*\n*复制代码\s*[\s\S]*?)(\n\n|$)/gim,
-//   //     (match, prefix, lang, firstLine, restCode, suffix) => {
-//   //       // 清理代码中的标记
-//   //       let cleanCode = firstLine + restCode.replace(/TEXT\s*\n*复制代码\s*/g, '\n');
-//   //       return `${prefix}\`\`\`${lang}\n${cleanCode.trim()}\n\`\`\`${suffix}`;
-//   //     }
-//   // );
-//   //
-//   // // 6. 处理包含#include的C++代码特殊情况
-//   // processedContent = processedContent.replace(
-//   //     /(\n|^)(cpp|c\+\+)\s+#include[\s\S]*?}/gim,
-//   //     (match, prefix, lang) => {
-//   //       // 移除所有的"TEXT"和"复制代码"标记
-//   //       let cleanCode = match.replace(/TEXT\s*\n*复制代码\s*/g, '\n');
-//   //       // 确保代码格式正确
-//   //       return `${prefix}\`\`\`${lang}\n${cleanCode.trim()}\n\`\`\``;
-//   //     }
-//   // );
-//   //
-//   // // 7. 处理单独的语言标识符行，后面跟着代码
-//   // processedContent = processedContent.replace(
-//   //     /(\n|^)(cpp|java|python|javascript|c\+\+|js|py|c#|csharp)(\s*\n+)([\s\S]*?)(\n\n|$)/gim,
-//   //     (match, prefix, lang, newlines, code, suffix) => {
-//   //       // 移除可能的"TEXT"和"复制代码"标记
-//   //       let cleanCode = code.replace(/TEXT\s*\n*复制代码\s*/g, '\n');
-//   //       return `${prefix}\`\`\`${lang}\n${cleanCode.trim()}\n\`\`\`${suffix}`;
-//   //     }
-//   // );
-//   //
-//   // return processedContent;
-// };
 
 // 复制代码功能
 const copyCodeToClipboard = (event) => {
