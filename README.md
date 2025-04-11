@@ -120,7 +120,7 @@ AI导师是一款智能化教育支持系统，旨在通过整合多模态数据
 
 1. 克隆本仓库到本地：
    ```bash
-   git clone <https://gitee.com/chi-hao0806/deepseek.git>
+   git clone <git clone https://gitee.com/chi-hao0806/deep-seek-ui.git>
    ```
 
 2. 安装依赖：
