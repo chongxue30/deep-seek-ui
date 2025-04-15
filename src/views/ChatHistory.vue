@@ -181,54 +181,44 @@ const fetchCourseList = async () => {
       // 学生先获取学生ID，再获取课程
       let studentId = null
 
-      // 1. 先尝试从localStorage获取studentId
-      const storedStudentId = localStorage.getItem('studentId')
-      if (storedStudentId) {
-        studentId = storedStudentId
-        console.log("从localStorage获取到学生ID:", studentId)
-      } else {
-        // 2. 如果没有，则通过API获取学生ID
-        console.log("通过API获取学生ID")
-        const userName = effectiveUserInfo?.userName
+      console.log("通过API获取学生ID")
+      const userName = effectiveUserInfo?.userName
 
-        if (!userName) {
-          throw new Error('无法获取学生信息：用户名不存在')
-        }
+      if (!userName) {
+        throw new Error('无法获取学生信息：用户名不存在')
+      }
 
-        // 通过用户名获取学生ID
-        const studentResponse = await fetch('/dev-api/system/student/byUserName', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            studentNo: userName
-          })
+      // 通过用户名获取学生ID
+      const studentResponse = await fetch('/dev-api/system/student/byUserName', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          studentNo: userName
         })
+      })
 
-        if (!studentResponse.ok) {
-          throw new Error('获取学生信息失败')
-        }
+      if (!studentResponse.ok) {
+        throw new Error('获取学生信息失败')
+      }
 
-        const studentData = await studentResponse.json()
+      const studentData = await studentResponse.json()
 
-        if (studentData.code === 200 && studentData.data) {
-          // 直接使用返回的学生数据
-          const studentRecord = studentData.data
+      if (studentData.code === 200 && studentData.data) {
+        // 直接使用返回的学生数据
+        const studentRecord = studentData.data
 
-          // 验证studentNo匹配
-          if (studentRecord.studentNo === userName) {
-            studentId = studentRecord.studentId
-            // 保存studentId到localStorage以便后续使用
-            localStorage.setItem('studentId', studentId)
-            console.log("成功获取并保存学生ID:", studentId)
-          } else {
-            throw new Error('学生学号不匹配')
-          }
+        // 验证studentNo匹配
+        if (studentRecord.studentNo === userName) {
+          studentId = studentRecord.studentId
+          console.log("成功获取学生ID:", studentId)
         } else {
-          throw new Error('未找到学生记录')
+          throw new Error('学生学号不匹配')
         }
+      } else {
+        throw new Error('未找到学生记录')
       }
 
       // 使用学生ID获取课程列表

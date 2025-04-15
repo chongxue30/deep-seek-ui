@@ -1960,7 +1960,7 @@ const getCollegeList = async () => {
     isLoadingCollege.value = true
     const token = localStorage.getItem('token')
 
-    const res = await fetch('/dev-api/system/college/list', {
+    const res = await fetch('/dev-api/system/college/list?pageNum=1&pageSize=100', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1996,7 +1996,7 @@ const getMajorList = async (collegeId) => {
     isLoadingMajor.value = true
     const token = localStorage.getItem('token')
 
-    const res = await fetch('/dev-api/system/major/listByCollegeId', {
+    const res = await fetch('/dev-api/system/major/listByCollegeId?pageNum=1&pageSize=100', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2033,7 +2033,7 @@ const getClassList = async (majorId) => {
     isLoadingClas.value = true
     const token = localStorage.getItem('token')
 
-    const res = await fetch('/dev-api/system/clas/listByMajorId', {
+    const res = await fetch('/dev-api/system/clas/listByMajorId?pageNum=1&pageSize=100', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -142,7 +142,11 @@
             </div>
 
             <!-- AI message -->
+
             <div v-else class="message-bubble assistant">
+              <div class="debug-info" style="font-size: 10px; color: #666; margin-bottom: 5px;">
+                消息ID: {{ message.id }} | 内容长度: {{ message.content?.length || 0 }}
+              </div>
               <!-- Thinking process -->
               <div v-if="message.thinking" class="thinking-process">
 <!--                <details>-->
@@ -2182,7 +2186,8 @@ const sendMessage = async () => {
         const isStudent = userInfo.roles?.some(role => role.roleKey === 'stu');
 
         if (isStudent) {
-          throw new Error('请先选择一个课程');
+          // throw new Error('请先选择一个课程');
+          console.log('未选择课程，但允许继续聊天');
         }
       }
     }
@@ -2214,10 +2219,12 @@ const sendMessage = async () => {
     }
 
     // Process streaming response
+    // Process streaming response
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
     let newConversationId = null;
+    let hasReceivedFirstContent = false; // 标记是否收到第一段内容
 
     while (true) {
       const { done, value } = await reader.read();
@@ -2229,6 +2236,9 @@ const sendMessage = async () => {
       // Decode received data chunk
       const chunk = decoder.decode(value, { stream: true });
       buffer += chunk;
+
+      // 调试日志
+      console.log("接收到新的数据块:", chunk.length);
 
       // Process complete SSE events
       const lines = buffer.split('\n\n');
@@ -2247,6 +2257,9 @@ const sendMessage = async () => {
         let data = dataMatch[1].trim();
 
         try {
+          // 调试日志
+          console.log("处理事件:", eventType);
+
           // Parse JSON data
           const parsedData = JSON.parse(data);
 
@@ -2255,30 +2268,44 @@ const sendMessage = async () => {
             newConversationId = parsedData.conversation_id;
           }
 
+          // 获取消息索引 - 在处理前先获取
+          const index = messages.value.findIndex(msg => msg.id === aiMessageId);
+          if (index === -1) {
+            console.warn("找不到消息对象:", aiMessageId);
+            continue;
+          }
+
+          // 确保消息对象结构完整
+          if (!messages.value[index].content) {
+            messages.value[index].content = '';
+          }
+
           // Update UI based on event type
           if (eventType === 'agent_thought' && parsedData.thought) {
             // Update thinking process
-            const index = messages.value.findIndex(msg => msg.id === aiMessageId);
-            if (index !== -1) {
-              messages.value[index].thinking = parsedData.thought;
-              await scrollToBottom();
-            }
-          } else if (eventType === 'agent_message' && parsedData.answer) {
-            // Update reply content
-            const index = messages.value.findIndex(msg => msg.id === aiMessageId);
-            if (index !== -1) {
-              messages.value[index].content += parsedData.answer;
-              await scrollToBottom();
-            }
+            messages.value[index].thinking = parsedData.thought;
+            await scrollToBottom();
+
+          } else if ((eventType === 'agent_message' || eventType === 'ping') && parsedData.answer) {
+            // 处理回复内容（既包含普通回复也包含ping事件中的完整回复）
+            hasReceivedFirstContent = true; // 标记已经收到内容
+
+            // 这里不做替换，只追加新内容
+            messages.value[index].content += parsedData.answer;
+            await scrollToBottom();
+
+            // 调试日志
+            console.log("更新后的内容长度:", messages.value[index].content.length);
+
           } else if (eventType === 'message' && parsedData.answer) {
-            // Handle regular message
-            const index = messages.value.findIndex(msg => msg.id === aiMessageId);
-            if (index !== -1) {
-              messages.value[index].content += parsedData.answer;
-              await scrollToBottom();
-            }
+            // 普通消息也直接追加
+            messages.value[index].content += parsedData.answer;
+            await scrollToBottom();
+
           } else if (eventType === 'message_end') {
             // Handle end of message, update conversation if needed
+            console.log("消息结束，最终内容长度:", messages.value[index].content.length);
+
             if (newConversationId) {
               await updateCurrentConversation(newConversationId);
             }
@@ -2308,10 +2335,10 @@ const sendMessage = async () => {
       messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
 
       // 如果错误是关于课程选择，重定向到课程选择页面
-      if (error.message.includes('请先选择一个课程')) {
-        alert('请先选择一个课程');
-        router.push('/course-selection');
-      }
+      // if (error.message.includes('请先选择一个课程')) {
+      //   alert('请先选择一个课程');
+      //   router.push('/course-selection');
+      // }
     }
   }finally {
     isSendingMessage.value = false;  // 响应完成，允许发送新消息
@@ -2859,6 +2886,7 @@ const confirmLogout = async () => {
     await authAPI.logout();
     localStorage.removeItem('token');
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('selectedCourseId'); // 清除选择的课程ID
     showNotification('已成功退出登录', 'success');
     setTimeout(() => {
       router.push('/login');
@@ -2900,14 +2928,14 @@ onMounted(async () => {
     const userInfo = JSON.parse(userInfoStr);
     const isStudent = userInfo.roles?.some(role => role.roleKey === 'stu');
 
-    if (isStudent) {
-      const selectedCourseId = localStorage.getItem('selectedCourseId');
-      if (!selectedCourseId) {
-        // 如果学生未选择课程，重定向到课程选择页面
-        router.push('/course-selection');
-        return;
-      }
-    }
+    // if (isStudent) {
+    //   const selectedCourseId = localStorage.getItem('selectedCourseId');
+    //   if (!selectedCourseId) {
+    //     // 如果学生未选择课程，重定向到课程选择页面
+    //     router.push('/course-selection');
+    //     return;
+    //   }
+    // }
   }
 
   // 获取对话历史

@@ -263,20 +263,34 @@ const preprocessContent = (content) => {
 
   // 3. 处理其他常见语言模式
 
-  // 3.1 处理"这是X语言实现："模式
+  // 3.1 修复处理HTML代码块的逻辑
+
+  // 清理重复的代码块标记
+  processedContent = processedContent.replace(/```html\s*```html/g, '```html');
+
+  // 处理"以下是符合现代Web标准的登录页面HTML"等引导语后的HTML代码
   processedContent = processedContent.replace(
-      /(这是|这是一个)?(C\+\+|Java|Python|JavaScript|C#|Go|Ruby|PHP|Swift|Kotlin|Scala|SQL|Bash|Shell|XML|JSON|YAML|Markdown|CSS|HTML)([^`]*?)(?:实现|冒泡排序|算法|代码|示例).*?[：:]\s*\n+([\s\S]*?)(?=\n\n注：|\n\n核心|\n\n\w+|\n\n这是|\n复制\n播放|\n\n$|$)/gi,
-      (match, prefix, lang, desc, code) => {
+      /(?:以下是符合现代Web标准的登录页面HTML|以下是\w+的HTML代码|这是一个HTML示例)(?:[：:])?\s*\n+(?:XML|HTML)?\s*\n+(?:```html)?\s*\n*(<!DOCTYPE html>[\s\S]*?<\/html>|<html[\s\S]*?<\/html>|<head[\s\S]*?<\/body>|<div[\s\S]*?<\/div>|<form[\s\S]*?<\/form>)\s*(?:```)?/gi,
+      (match, code) => {
+        // 确保代码不会被重复包装
+        return `以下是HTML代码：\n\`\`\`html\n${code.trim()}\n\`\`\`\n\n`;
+      }
+  );
+
+  // 处理HTML标签序列
+  processedContent = processedContent.replace(
+      /(?:html|HTML)\s*\n+(?!```)(<!DOCTYPE html>[\s\S]*?<\/html>|<html[\s\S]*?<\/html>|<head[\s\S]*?<\/body>|<div[\s\S]*?<\/div>|<form[\s\S]*?<\/form>)/g,
+      (match, code) => {
         if (!code.trim()) return match;
+        return `\n\`\`\`html\n${code.trim()}\n\`\`\`\n\n`;
+      }
+  );
 
-        let langId = lang.toLowerCase();
-        if (langId === 'c++') langId = 'cpp';
-        if (langId === 'c#') langId = 'csharp';
-        if (langId === 'golang') langId = 'go';
-
-        let cleanCode = code.replace(/^(CPP|JAVA|PYTHON|JS|C\+\+|GO)\s*\n+/i, '');
-
-        return `${prefix || ''}${lang}${desc}：\n\`\`\`${langId}\n${cleanCode.trim()}\n\`\`\`\n\n`;
+  // 独立的HTML代码块检测
+  processedContent = processedContent.replace(
+      /(?<!```[\s\S]*?)(<!DOCTYPE html>[\s\S]*?<\/html>|<html[\s\S]*?<\/html>)(?![\s\S]*?```)/g,
+      (match) => {
+        return `\n\`\`\`html\n${match.trim()}\n\`\`\`\n\n`;
       }
   );
 
