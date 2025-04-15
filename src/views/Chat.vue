@@ -2334,11 +2334,7 @@ const sendMessage = async () => {
       // If request failed, remove AI message
       messages.value = messages.value.filter(msg => msg.id !== aiMessageId);
 
-      // 如果错误是关于课程选择，重定向到课程选择页面
-      // if (error.message.includes('请先选择一个课程')) {
-      //   alert('请先选择一个课程');
-      //   router.push('/course-selection');
-      // }
+
     }
   }finally {
     isSendingMessage.value = false;  // 响应完成，允许发送新消息
@@ -2926,16 +2922,7 @@ onMounted(async () => {
   const userInfoStr = localStorage.getItem('userInfo');
   if (userInfoStr) {
     const userInfo = JSON.parse(userInfoStr);
-    const isStudent = userInfo.roles?.some(role => role.roleKey === 'stu');
 
-    // if (isStudent) {
-    //   const selectedCourseId = localStorage.getItem('selectedCourseId');
-    //   if (!selectedCourseId) {
-    //     // 如果学生未选择课程，重定向到课程选择页面
-    //     router.push('/course-selection');
-    //     return;
-    //   }
-    // }
   }
 
   // 获取对话历史

@@ -20,7 +20,8 @@ const routes = [
     // 添加课程选择路由
     path: '/course-selection',
     name: 'CourseSelection',
-    component: () => import('../views/CourseSelection.vue'),
+    // component: () => import('../views/CourseSelection.vue'),
+    component: () => import('../views/Chat.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -69,11 +70,11 @@ router.beforeEach((to, from, next) => {
         console.log('已选择的课程ID:', selectedCourseId)
 
         // 如果是学生且没有选择课程，且不是前往课程选择页面，则重定向到课程选择页面
-        if (!selectedCourseId && to.path !== '/course-selection') {
-          console.log('重定向到课程选择页面')
-          next('/course-selection')
-          return
-        }
+        // if (!selectedCourseId && to.path !== '/course-selection') {
+        //   console.log('重定向到课程选择页面')
+        //   next('/course-selection')
+        //   return
+        // }
       }
     } catch (error) {
       console.error('解析用户信息失败:', error)
