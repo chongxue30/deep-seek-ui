@@ -22,18 +22,7 @@
         </div>
       </div>
       <div class="header-tabs">
-<!--        <div class="tab active">-->
-<!--          <el-icon><DataAnalysis /></el-icon>-->
-<!--          <span>数据分析</span>-->
-<!--        </div>-->
-<!--        <div class="tab">-->
-<!--          <el-icon><User /></el-icon>-->
-<!--          <span>学生管理</span>-->
-<!--        </div>-->
-<!--        <div class="tab">-->
-<!--          <el-icon><Setting /></el-icon>-->
-<!--          <span>系统设置</span>-->
-<!--        </div>-->
+        <!-- 头部标签 -->
       </div>
       <div class="header-actions">
         <el-tooltip content="刷新数据" placement="bottom">
@@ -49,24 +38,6 @@
             <span>刷新数据</span>
           </el-button>
         </el-tooltip>
-<!--        <el-dropdown @command="handleCommand">-->
-<!--          <el-button type="info" plain size="small" class="action-btn">-->
-<!--            <el-icon><More /></el-icon>-->
-<!--          </el-button>-->
-<!--          <template #dropdown>-->
-<!--            <el-dropdown-menu>-->
-<!--              <el-dropdown-item command="exportData">-->
-<!--                <el-icon><Download /></el-icon> 导出数据-->
-<!--              </el-dropdown-item>-->
-<!--              <el-dropdown-item command="settings">-->
-<!--                <el-icon><Setting /></el-icon> 设置-->
-<!--              </el-dropdown-item>-->
-<!--              <el-dropdown-item command="help">-->
-<!--                <el-icon><QuestionFilled /></el-icon> 帮助-->
-<!--              </el-dropdown-item>-->
-<!--            </el-dropdown-menu>-->
-<!--          </template>-->
-<!--        </el-dropdown>-->
       </div>
     </header>
 
@@ -78,9 +49,10 @@
             class="stat-card"
             v-for="(stat, index) in statsData"
             :key="index"
-            :class="`stat-card-${index+1}`"
+            :class="[`stat-card-${index+1}`, {'stat-card-clickable': index === 0 || index === 3}]"
             @mouseenter="onStatHover(index)"
             @mouseleave="onStatLeave(index)"
+            @click="handleStatCardClick(index)"
         >
           <div class="stat-icon-wrapper">
             <el-icon><component :is="stat.icon" /></el-icon>
@@ -93,7 +65,7 @@
                   :duration="2000"
                   :decimals="0"
                   separator=","
-                  ref="countTo"
+                  :key="stat.value"
               ></count-to>
             </div>
             <div class="stat-label">{{ stat.label }}</div>
@@ -108,6 +80,11 @@
           </div>
           <div class="stat-chart">
             <div class="sparkline" :id="`sparkline-${index}`"></div>
+          </div>
+          <!-- 添加点击提示 -->
+          <div v-if="index === 0 || index === 3" class="stat-action-hint">
+            <el-icon><ArrowRight /></el-icon>
+            <span>{{ index === 0 ? '查看全部' : '查看今日' }}</span>
           </div>
         </div>
       </div>
@@ -153,13 +130,6 @@
           <div class="dashboard-panel trend-panel">
             <div class="panel-header">
               <h3><el-icon><TrendCharts /></el-icon> 提问趋势分析</h3>
-<!--              <div class="panel-actions">-->
-<!--                <el-radio-group v-model="trendTimeRange" size="small">-->
-<!--                  <el-radio-button label="7">7天</el-radio-button>-->
-<!--                  <el-radio-button label="14">14天</el-radio-button>-->
-<!--                  <el-radio-button label="30">30天</el-radio-button>-->
-<!--                </el-radio-group>-->
-<!--              </div>-->
             </div>
             <div class="panel-body">
               <div ref="dailyTrendChartRef" class="chart-container"></div>
@@ -293,12 +263,12 @@
             placeholder="请输入学生用户名"
             clearable
         >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-          <template #append>
-            <el-button type="primary" @click="searchStudentProfile" :loading="searchingProfile">查询</el-button>
-          </template>
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+        <template #append>
+          <el-button type="primary" @click="searchStudentProfile" :loading="searchingProfile">查询</el-button>
+        </template>
         </el-input>
       </div>
 
@@ -357,7 +327,6 @@
                 <div class="progress-item" v-for="(item, index) in learningProgressItems" :key="index">
                   <div class="progress-label">
                     <span>{{ item.label }}</span>
-<!--                    <span>{{ item.value }}%</span>-->
                   </div>
                   <el-progress
                       :percentage="item.value"
@@ -392,19 +361,210 @@
         <p>请检查用户名是否正确，或尝试搜索其他学生</p>
       </div>
     </el-dialog>
+
+    <!-- 提问记录对话框 -->
+    <el-dialog
+        :title="questionDialogTitle"
+        v-model="showQuestionDialog"
+        width="85%"
+        class="question-dialog custom-dialog"
+        destroy-on-close
+        append-to-body
+    >
+      <div class="dialog-header">
+        <div class="dialog-title-info">
+          <el-icon :size="20" class="dialog-icon"><ChatDotRound /></el-icon>
+          <span>{{ queryParams.today ? '今日提问记录' : '历史提问记录' }}</span>
+          <el-tag type="info" class="ml-2" effect="plain">
+            课程名称: {{ getCourseName(currentQuestion.collegeId) || '全部课程' }}
+          </el-tag>
+          <el-tag v-if="queryParams.today" type="success" class="ml-2" effect="plain">
+            仅显示今日数据
+          </el-tag>
+        </div>
+
+        <el-form :inline="true" :model="queryParams" class="question-search-form">
+          <el-form-item label="内容关键词">
+            <el-input
+                v-model="queryParams.xxContent"
+                placeholder="请输入内容关键词"
+                clearable
+            />
+          </el-form-item>
+          <el-form-item label="用户名">
+            <el-input
+                v-model="queryParams.userName"
+                placeholder="请输入用户名"
+                clearable
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="searchQuestions">搜索</el-button>
+            <el-button @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 数据统计卡片 -->
+      <div class="question-stats-cards" v-if="questionList.length > 0">
+        <div class="question-stat-card">
+          <div class="stat-icon"><el-icon><ChatDotRound /></el-icon></div>
+          <div class="stat-content">
+            <div class="stat-value">{{ total }}</div>
+            <div class="stat-label">{{ queryParams.today ? '今日提问总数' : '提问总数' }}</div>
+          </div>
+        </div>
+        <div class="question-stat-card">
+          <div class="stat-icon"><el-icon><User /></el-icon></div>
+          <div class="stat-content">
+            <div class="stat-value">{{ uniqueUserCount }}</div>
+            <div class="stat-label">参与用户数</div>
+          </div>
+        </div>
+        <div class="question-stat-card">
+          <div class="stat-icon"><el-icon><Calendar /></el-icon></div>
+          <div class="stat-content">
+            <div class="stat-value">{{ queryParams.today ? formatDate(new Date()) : '全部' }}</div>
+            <div class="stat-label">查询日期</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 空数据状态 -->
+      <el-empty
+          v-if="!questionLoading && questionList.length === 0"
+          description="暂无提问记录"
+          :image-size="200"
+      >
+        <template #image>
+          <el-icon :size="60" class="empty-icon"><ChatDotRound /></el-icon>
+        </template>
+      </el-empty>
+
+      <!-- 提问记录表格 -->
+      <el-table
+          v-loading="questionLoading"
+          :data="questionList"
+          border
+          stripe
+          style="width: 100%"
+          v-if="questionList.length > 0"
+          class="custom-table"
+          :header-cell-style="{background:'#f5f7fa', color: '#606266'}"
+          @row-click="handleRowClick"
+      >
+<!--        <el-table-column prop="xxId" label="ID" width="80" />-->
+        <el-table-column label="用户" width="150">
+          <template #default="scope">
+            <div class="user-cell">
+<!--              <div class="user-avatar" :style="{ background: getAvatarGradient(scope.$index % 5) }">-->
+<!--                {{ scope.row.userName ? scope.row.userName.charAt(0) : '?' }}-->
+<!--              </div>-->
+              <div class="user-info">
+                <div class="user-name">{{ scope.row.userName }}</div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="xxContent" label="提问内容" min-width="300" show-overflow-tooltip>
+          <template #default="scope">
+            <div class="content-preview">
+              <el-icon><ChatDotRound /></el-icon>
+              <span>{{ scope.row.xxContent }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180">
+          <template #default="scope">
+            <div class="time-cell">
+              <el-icon><Calendar /></el-icon>
+              <span>{{ formatISODate(scope.row.createTime) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+<!--        <el-table-column label="操作" width="120" fixed="right">-->
+<!--          <template #default="scope">-->
+<!--            <el-button type="text" size="small" @click.stop="viewQuestionDetail(scope.row)">查看详情</el-button>-->
+<!--          </template>-->
+<!--        </el-table-column>-->
+      </el-table>
+
+      <div class="pagination-container" v-if="questionList.length > 0">
+        <el-pagination
+            v-model:current-page="queryParams.pageNum"
+            v-model:page-size="queryParams.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            background
+        />
+      </div>
+    </el-dialog>
+
+    <!-- 提问详情对话框 -->
+    <el-dialog
+        title="提问详情"
+        v-model="showQuestionDetail"
+        width="50%"
+        append-to-body
+        destroy-on-close
+        class="detail-dialog custom-dialog"
+    >
+      <div v-if="currentQuestion" class="question-detail">
+        <div class="detail-header">
+          <div class="user-info">
+            <div class="avatar" :style="{ background: getRandomGradient() }">
+              {{ currentQuestion.userName ? currentQuestion.userName.charAt(0) : '?' }}
+            </div>
+            <div class="info">
+              <div class="name">{{ currentQuestion.userName }}</div>
+            </div>
+          </div>
+          <div class="time">
+            <el-icon><Calendar /></el-icon>
+            {{ formatISODate(currentQuestion.createTime) }}
+          </div>
+        </div>
+        <div class="detail-content">
+          <div class="content-title">
+            <el-icon><ChatDotRound /></el-icon>
+            提问内容：
+          </div>
+          <div class="content-text">{{ currentQuestion.xxContent }}</div>
+        </div>
+        <div class="detail-meta">
+          <div class="meta-item">
+            <span class="label">课程名称：</span>
+            <span class="value">{{ getCourseName(currentQuestion.collegeId) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">会话ID：</span>
+            <span class="value">{{ currentQuestion.ltId || '未知' }}</span>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <el-button @click="showQuestionDetail = false">
+            关闭
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import {ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch} from 'vue';
 // 引入外部样式文件
 import '@/assets/styles/dashboard.scss';
 import * as echarts from 'echarts';
 import CountTo from 'vue-count-to'
-import { ElMessage, ElNotification} from 'element-plus';
+import {ElMessage, ElNotification} from 'element-plus';
 import {
   DataAnalysis, User, Refresh, More, CaretTop, CaretBottom, Minus, PieChart, FullScreen,
-  TrendCharts, Collection, ChatDotRound, Search, Calendar, WarningFilled
+  TrendCharts, Collection, ChatDotRound, Search, Calendar, WarningFilled, ArrowRight
 } from '@element-plus/icons-vue';
 import {
   getStatistics,
@@ -416,6 +576,7 @@ import {
   getActiveStudents,
   getStudentProfile
 } from '@/api/analyse/dashboard';
+import request from '@/utils/request';
 
 // Props
 const props = defineProps({
@@ -469,6 +630,29 @@ const hoveredStatIndex = ref(null);
 const learningProgressItems = ref([]);
 const recommendationItems = ref([]);
 
+// 提问记录相关状态
+const showQuestionDialog = ref(false);
+const questionDialogTitle = ref('提问记录');
+const questionList = ref([]);
+const total = ref(0);
+const questionLoading = ref(false);
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  xxContent: '',
+  userName: '',
+  role: '',
+  collegeId: null,
+  classId: null,
+  ltId: null,
+  today: false, // 是否只查询今日数据
+  beginTime: null, // 开始时间
+  endTime: null // 结束时间
+});
+const showQuestionDetail = ref(false);
+const currentQuestion = ref(null);
+const courseName = ref(''); // 课程名称
+
 // DOM引用
 const questionTypeChartRef = ref(null);
 const complexityChartRef = ref(null);
@@ -476,6 +660,15 @@ const dailyTrendChartRef = ref(null);
 const subjectChartRef = ref(null);
 const studentComplexityChartRef = ref(null);
 const countTo = ref(null);
+
+// 课程映射表（示例数据，实际应从API获取）
+const courseMap = {
+  '1': '计算机科学导论',
+  '2': '数据结构与算法',
+  '3': '操作系统原理',
+  '4': '计算机网络',
+  '5': '数据库系统'
+};
 
 // 颜色方案
 const chartColors = [
@@ -525,6 +718,13 @@ const statsData = computed(() => [
   }
 ]);
 
+// 计算唯一用户数
+const uniqueUserCount = computed(() => {
+  if (!questionList.value.length) return 0;
+  const uniqueUsers = new Set(questionList.value.map(item => item.userName));
+  return uniqueUsers.size;
+});
+
 // 格式化ISO日期字符串
 const formatISODate = (isoString) => {
   if (!isoString) return '暂无记录';
@@ -542,13 +742,43 @@ const formatISODate = (isoString) => {
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${year}-${month}-${day} ${hours}:${minutes}`;
-
-    // 或者使用本地化格式（更友好但格式可能因浏览器设置而异）
-    // return date.toLocaleString();
   } catch (e) {
     console.error('日期格式化错误:', e);
     return isoString;
   }
+}
+
+// 格式化日期为 YYYY-MM-DD
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// 获取角色类型
+const getRoleType = (role) => {
+  switch (role) {
+    case 'student': return 'primary';
+    case 'teacher': return 'success';
+    case 'assistant': return 'info';
+    default: return 'info';
+  }
+}
+
+// 获取角色名称
+const getRoleName = (role) => {
+  switch (role) {
+    case 'student': return '学生';
+    case 'teacher': return '教师';
+    case 'assistant': return '助教';
+    default: return '未知';
+  }
+}
+
+// 获取课程名称
+const getCourseName = (courseId) => {
+  return courseMap[courseId] || '未知课程';
 }
 
 // 生命周期钩子
@@ -587,6 +817,12 @@ onBeforeUnmount(() => {
 watch(() => props.classId, (newVal) => {
   if (newVal) {
     getDashboardData();
+    // 更新查询参数中的班级ID
+    queryParams.classId = newVal;
+    queryParams.collegeId = newVal; // 假设课程ID和班级ID相同，如果不同请调整
+
+    // 更新课程名称
+    courseName.value = getCourseName(newVal);
   }
 });
 
@@ -607,7 +843,6 @@ function initAnimations() {
     }
   }
 }
-
 
 // 初始化迷你趋势图
 function initSparklines() {
@@ -647,8 +882,8 @@ function initSparklines() {
           },
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: getSparklineColor(index, stat.trend, 0.2) },
-              { offset: 1, color: getSparklineColor(index, stat.trend, 0.02) }
+              {offset: 0, color: getSparklineColor(index, stat.trend, 0.2)},
+              {offset: 1, color: getSparklineColor(index, stat.trend, 0.02)}
             ])
           },
           smooth: true
@@ -694,6 +929,19 @@ function getAvatarGradient(index) {
   ];
 
   return gradients[index % gradients.length];
+}
+
+// 获取随机渐变色（用于提问详情）
+function getRandomGradient() {
+  const gradients = [
+    'linear-gradient(135deg, #4361ee, #3a86ff)',
+    'linear-gradient(135deg, #7209b7, #b5179e)',
+    'linear-gradient(135deg, #f94144, #f3722c)',
+    'linear-gradient(135deg, #43aa8b, #90be6d)',
+    'linear-gradient(135deg, #f8961e, #f9c74f)'
+  ];
+
+  return gradients[Math.floor(Math.random() * gradients.length)];
 }
 
 // 获取关键词背景色
@@ -748,26 +996,6 @@ function onKeywordLeave(e) {
   e.currentTarget.style.zIndex = '';
 }
 
-// 下拉菜单命令处理
-// function handleCommand(command) {
-//   if (command === 'exportData') {
-//     ElMessage({
-//       message: '数据导出功能即将上线',
-//       type: 'info'
-//     });
-//   } else if (command === 'settings') {
-//     ElMessage({
-//       message: '设置功能即将上线',
-//       type: 'info'
-//     });
-//   } else if (command === 'help') {
-//     ElMessage({
-//       message: '帮助文档即将上线',
-//       type: 'info'
-//     });
-//   }
-// }
-
 // 显示学生画像
 function showStudentProfile(userName) {
   showStudentSearch.value = true;
@@ -806,10 +1034,12 @@ function getDashboardData() {
   ]).then(([statsRes, questionTypesRes, subjectsRes, complexityRes, dailyTrendRes, hotKeywordsRes, activeStudentsRes]) => {
     if (statsRes.code === 200) {
       // 确保明确赋值每个属性，避免整体赋值可能导致的引用问题
-      statistics.value.totalQuestions = statsRes.data.totalQuestions || 0;
-      statistics.value.totalStudents = statsRes.data.totalStudents || 0;
-      statistics.value.totalSubjects = statsRes.data.totalSubjects || 0;
-      statistics.value.todayQuestions = statsRes.data.todayQuestions || 0;
+      statistics.value = {
+        totalQuestions: Number(statsRes.data.totalQuestions) || 0,
+        totalStudents: Number(statsRes.data.totalStudents) || 0,
+        totalSubjects: Number(statsRes.data.totalSubjects) || 0,
+        todayQuestions: Number(statsRes.data.todayQuestions) || 0
+      };
 
       // 输出调试信息
       console.log('统计数据已更新:', statistics.value);
@@ -830,7 +1060,7 @@ function getDashboardData() {
     }
 
     if (complexityRes.code === 200) {
-      complexityData.value = complexityRes.data || { simple: 0, medium: 0, complex: 0 };
+      complexityData.value = complexityRes.data || {simple: 0, medium: 0, complex: 0};
       nextTick(() => {
         initComplexityChart();
       });
@@ -852,11 +1082,12 @@ function getDashboardData() {
     }
 
     isLoading.value = false;
-    initAnimations();
+    // 不需要手动初始化countTo动画，key绑定会自动处理
     nextTick(() => {
       initSparklines();
     });
-  }).catch(() => {
+  }).catch((error) => {
+    console.error('获取数据失败:', error);
     isLoading.value = false;
     ElMessage.error('获取数据失败，请稍后重试');
   });
@@ -1501,4 +1732,461 @@ function lightenColor(color, percent) {
       B = (num & 0x0000FF) + amt;
   return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 + (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 + (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
 }
+
+// 处理统计卡片点击
+function handleStatCardClick(index) {
+  if (index === 0) {
+    // 点击总提问数
+    showQuestionRecords(false);
+  } else if (index === 3) {
+    // 点击今日提问
+    showQuestionRecords(true);
+  }
+}
+
+// 显示提问记录
+function showQuestionRecords(todayOnly) {
+  // 重置查询参数
+  queryParams.pageNum = 1;
+  queryParams.pageSize = 10;
+  queryParams.xxContent = '';
+  queryParams.userName = '';
+  queryParams.role = '';
+  queryParams.today = todayOnly;
+
+  // 设置班级ID和课程ID
+  queryParams.classId = props.classId;
+  queryParams.collegeId = props.classId;
+
+  // 设置日期范围
+  if (todayOnly) {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    // 设置开始时间为今天的00:00:00
+    queryParams.beginTime = `${year}-${month}-${day} 00:00:00`;
+    // 设置结束时间为今天的23:59:59
+    queryParams.endTime = `${year}-${month}-${day} 23:59:59`;
+  } else {
+    // 查询所有历史记录，清除日期限制
+    queryParams.beginTime = null;
+    queryParams.endTime = null;
+  }
+
+  // 设置对话框标题
+  questionDialogTitle.value = todayOnly ? '今日提问记录' : '历史提问记录';
+
+  // 更新课程名称
+  courseName.value = getCourseName(queryParams.collegeId);
+
+  // 显示对话框
+  showQuestionDialog.value = true;
+
+  // 加载数据
+  getQuestionList();
+}
+
+// 获取提问记录列表
+function getQuestionList() {
+  questionLoading.value = true;
+
+  // 构建查询参数
+  const params = {
+    pageNum: queryParams.pageNum,
+    pageSize: queryParams.pageSize,
+    xxContent: queryParams.xxContent,
+    userName: queryParams.userName,
+    role: queryParams.role,
+    collegeId: queryParams.collegeId,
+    classId: queryParams.classId,
+    ltId: queryParams.ltId
+  };
+
+  // 添加日期过滤
+  if (queryParams.beginTime) {
+    params.beginTime = queryParams.beginTime;
+  }
+
+  if (queryParams.endTime) {
+    params.endTime = queryParams.endTime;
+  }
+
+  // 发送请求获取数据
+  request({
+    url: '/system/xx/list',
+    method: 'get',
+    params
+  }).then(res => {
+    if (res.code === 200) {
+      questionList.value = res.rows || [];
+      total.value = res.total || 0;
+    } else {
+      questionList.value = [];
+      total.value = 0;
+      ElMessage.error(res.msg || '获取提问记录失败');
+    }
+    questionLoading.value = false;
+  }).catch(err => {
+    console.error('获取提问记录失败:', err);
+    questionList.value = [];
+    total.value = 0;
+    questionLoading.value = false;
+    ElMessage.error('获取提问记录失败，请稍后重试');
+  });
+}
+
+// 搜索提问记录
+function searchQuestions() {
+  queryParams.pageNum = 1;
+  getQuestionList();
+}
+
+// 重置查询条件
+function resetQuery() {
+  queryParams.xxContent = '';
+  queryParams.userName = '';
+  queryParams.role = '';
+  queryParams.pageNum = 1;
+  getQuestionList();
+}
+
+// 处理分页大小变化
+function handleSizeChange(size) {
+  queryParams.pageSize = size;
+  getQuestionList();
+}
+
+// 处理页码变化
+function handleCurrentChange(page) {
+  queryParams.pageNum = page;
+  getQuestionList();
+}
+
+// 查看提问详情
+function viewQuestionDetail(row) {
+  currentQuestion.value = row;
+  showQuestionDetail.value = true;
+}
+
+// 处理表格行点击
+function handleRowClick(row) {
+  viewQuestionDetail(row);
+}
 </script>
+
+<style>
+/* 提问记录对话框样式 */
+.custom-dialog .el-dialog__header {
+  padding: 15px 20px;
+  margin-right: 0;
+  background: linear-gradient(135deg, #4361ee, #3a86ff);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.custom-dialog .el-dialog__title {
+  color: white;
+  font-weight: bold;
+}
+
+.custom-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: white;
+}
+
+.custom-dialog .el-dialog__body {
+  padding: 20px;
+}
+
+.dialog-header {
+  margin-bottom: 20px;
+}
+
+.dialog-title-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #eee;
+}
+
+.dialog-title-info .dialog-icon {
+  margin-right: 8px;
+  color: #4361ee;
+}
+
+.dialog-title-info span {
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.ml-2 {
+  margin-left: 8px;
+}
+
+.question-search-form {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.pagination-container {
+  margin-top: 20px;
+  text-align: right;
+}
+
+/* 提问统计卡片 */
+.question-stats-cards {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.question-stat-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.question-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.1);
+}
+
+.question-stat-card .stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4361ee, #3a86ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  color: white;
+  font-size: 24px;
+}
+
+.question-stat-card:nth-child(2) .stat-icon {
+  background: linear-gradient(135deg, #7209b7, #b5179e);
+}
+
+.question-stat-card:nth-child(3) .stat-icon {
+  background: linear-gradient(135deg, #43aa8b, #90be6d);
+}
+
+.question-stat-card .stat-content {
+  flex: 1;
+}
+
+.question-stat-card .stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.question-stat-card .stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 表格样式 */
+.custom-table {
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.content-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 空数据状态 */
+.empty-icon {
+  color: #4361ee;
+  opacity: 0.5;
+}
+
+/* 提问详情样式 */
+.question-detail {
+  padding: 10px;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.time {
+  color: #999;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.detail-content {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.content-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.content-text {
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px;
+  background-color: #f0f2f5;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.meta-item {
+  display: flex;
+}
+
+.label {
+  color: #666;
+  margin-right: 5px;
+}
+
+.value {
+  font-weight: bold;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* 统计卡片点击提示 */
+.stat-card-clickable {
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-clickable:hover .stat-action-hint {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.stat-action-hint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(67, 97, 238, 0.9);
+  color: white;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+/* 移除顶部统计卡片与仪表盘之间的间隔 */
+.dashboard-content .stats-overview {
+  margin-bottom: 0;
+}
+
+.dashboard-grid {
+  margin-top: 20px;
+}
+</style>
