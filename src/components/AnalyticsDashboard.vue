@@ -97,11 +97,11 @@
           <div class="dashboard-panel question-types-panel">
             <div class="panel-header">
               <h3><el-icon><PieChart /></el-icon> 问题类型分布</h3>
-              <div class="panel-actions">
-                <el-tooltip content="查看详情" placement="top">
-                  <el-icon class="action-icon"><FullScreen /></el-icon>
-                </el-tooltip>
-              </div>
+<!--              <div class="panel-actions">-->
+<!--                <el-tooltip content="查看详情" placement="top">-->
+<!--                  <el-icon class="action-icon"><FullScreen /></el-icon>-->
+<!--                </el-tooltip>-->
+<!--              </div>-->
             </div>
             <div class="panel-body">
               <div ref="questionTypeChartRef" class="chart-container"></div>
@@ -112,11 +112,11 @@
           <div class="dashboard-panel complexity-panel">
             <div class="panel-header">
               <h3><el-icon><DataAnalysis /></el-icon> 问题复杂度分布</h3>
-              <div class="panel-actions">
-                <el-tooltip content="查看详情" placement="top">
-                  <el-icon class="action-icon"><FullScreen /></el-icon>
-                </el-tooltip>
-              </div>
+<!--              <div class="panel-actions">-->
+<!--                <el-tooltip content="查看详情" placement="top">-->
+<!--                  <el-icon class="action-icon"><FullScreen /></el-icon>-->
+<!--                </el-tooltip>-->
+<!--              </div>-->
             </div>
             <div class="panel-body">
               <div ref="complexityChartRef" class="chart-container"></div>
@@ -140,11 +140,11 @@
           <div class="dashboard-panel subjects-panel">
             <div class="panel-header">
               <h3><el-icon><Collection /></el-icon> 学科分布</h3>
-              <div class="panel-actions">
-                <el-tooltip content="查看详情" placement="top">
-                  <el-icon class="action-icon"><FullScreen /></el-icon>
-                </el-tooltip>
-              </div>
+<!--              <div class="panel-actions">-->
+<!--                <el-tooltip content="查看详情" placement="top">-->
+<!--                  <el-icon class="action-icon"><FullScreen /></el-icon>-->
+<!--                </el-tooltip>-->
+<!--              </div>-->
             </div>
             <div class="panel-body">
               <div ref="subjectChartRef" class="chart-container"></div>
@@ -158,11 +158,11 @@
           <div class="dashboard-panel students-panel">
             <div class="panel-header">
               <h3><el-icon><User /></el-icon> 活跃学生</h3>
-              <div class="panel-actions">
-                <el-tooltip content="查看全部" placement="top">
-                  <el-icon class="action-icon"><More /></el-icon>
-                </el-tooltip>
-              </div>
+<!--              <div class="panel-actions">-->
+<!--                <el-tooltip content="查看全部" placement="top">-->
+<!--                  <el-icon class="action-icon"><More /></el-icon>-->
+<!--                </el-tooltip>-->
+<!--              </div>-->
             </div>
             <div class="panel-body">
               <div class="student-list">
@@ -208,11 +208,11 @@
           <div class="dashboard-panel keywords-panel">
             <div class="panel-header">
               <h3><el-icon><Collection /></el-icon> 热门关键词</h3>
-              <div class="panel-actions">
-                <el-tooltip content="查看全部" placement="top">
-                  <el-icon class="action-icon"><More /></el-icon>
-                </el-tooltip>
-              </div>
+<!--              <div class="panel-actions">-->
+<!--                <el-tooltip content="查看全部" placement="top">-->
+<!--                  <el-icon class="action-icon"><More /></el-icon>-->
+<!--                </el-tooltip>-->
+<!--              </div>-->
             </div>
             <div class="panel-body">
               <div class="keywords-cloud">
