@@ -375,9 +375,9 @@
         <div class="dialog-title-info">
           <el-icon :size="20" class="dialog-icon"><ChatDotRound /></el-icon>
           <span>{{ queryParams.today ? '今日提问记录' : '历史提问记录' }}</span>
-          <el-tag type="info" class="ml-2" effect="plain">
-            课程名称: {{ getCourseName(currentQuestion.collegeId) || '全部课程' }}
-          </el-tag>
+<!--          <el-tag type="info" class="ml-2" effect="plain">-->
+<!--            课程名称: {{ getCourseName(currentQuestion.collegeId) || '全部课程' }}-->
+<!--          </el-tag>-->
           <el-tag v-if="queryParams.today" type="success" class="ml-2" effect="plain">
             仅显示今日数据
           </el-tag>
@@ -417,7 +417,7 @@
         <div class="question-stat-card">
           <div class="stat-icon"><el-icon><User /></el-icon></div>
           <div class="stat-content">
-            <div class="stat-value">{{ uniqueUserCount }}</div>
+            <div class="stat-value">{{ userCount }}</div>
             <div class="stat-label">参与用户数</div>
           </div>
         </div>
@@ -535,10 +535,10 @@
           <div class="content-text">{{ currentQuestion.xxContent }}</div>
         </div>
         <div class="detail-meta">
-          <div class="meta-item">
-            <span class="label">课程名称：</span>
-            <span class="value">{{ getCourseName(currentQuestion.collegeId) }}</span>
-          </div>
+<!--          <div class="meta-item">-->
+<!--            <span class="label">课程名称：</span>-->
+<!--            <span class="value">{{ getCourseName(currentQuestion.collegeId) }}</span>-->
+<!--          </div>-->
           <div class="meta-item">
             <span class="label">会话ID：</span>
             <span class="value">{{ currentQuestion.ltId || '未知' }}</span>
@@ -635,6 +635,7 @@ const showQuestionDialog = ref(false);
 const questionDialogTitle = ref('提问记录');
 const questionList = ref([]);
 const total = ref(0);
+const userCount = ref(0);
 const questionLoading = ref(false);
 const queryParams = reactive({
   pageNum: 1,
@@ -1822,9 +1823,11 @@ function getQuestionList() {
     if (res.code === 200) {
       questionList.value = res.rows || [];
       total.value = res.total || 0;
+      userCount.value = res.userCount || 0;
     } else {
       questionList.value = [];
       total.value = 0;
+      userCount.value = 0;
       ElMessage.error(res.msg || '获取提问记录失败');
     }
     questionLoading.value = false;
@@ -1832,6 +1835,7 @@ function getQuestionList() {
     console.error('获取提问记录失败:', err);
     questionList.value = [];
     total.value = 0;
+    userCount.value = 0;
     questionLoading.value = false;
     ElMessage.error('获取提问记录失败，请稍后重试');
   });
