@@ -2072,7 +2072,7 @@ function handleRowClick(row) {
 
 .user-info {
   display: flex;
-  align-items: center;
+  //align-items: center;
 }
 
 .avatar {
