@@ -143,9 +143,10 @@
 
             <!-- AI message -->
 
-            <div v-else class="message-bubble assistant">
+            <div v-else class="message-bubble assistant" :data-message-id="message.id">
               <div class="debug-info" style="font-size: 10px; color: #666; margin-bottom: 5px;">
-                消息ID: {{ message.id }} | 内容长度: {{ message.content?.length || 0 }}
+                内容长度: {{ message.content?.length || 0 }}
+<!--                消息ID: {{ message.id }} | 内容长度: {{ message.content?.length || 0 }}-->
               </div>
               <!-- Thinking process -->
               <div v-if="message.thinking" class="thinking-process">
@@ -2414,21 +2415,39 @@ const removeFile = (fileId) => {
 
 // 复制消息内容
 const copyMessageContent = (message) => {
-  // 创建一个临时元素来提取纯文本内容
-  const tempElement = document.createElement('div');
-  tempElement.innerHTML = message.content;
-  const textContent = tempElement.textContent || tempElement.innerText || '';
+  // 获取消息内容元素
+  const messageElement = document.querySelector(`[data-message-id="${message.id}"] .message-content`);
 
-  navigator.clipboard.writeText(textContent).then(() => {
-    // 显示复制成功提示
-    copySuccess.value = true;
-    setTimeout(() => {
-      copySuccess.value = false;
-    }, 2000);
-  }).catch(err => {
-    console.error('复制失败:', err);
-    showNotification('复制失败，请重试', 'error');
-  });
+  if (messageElement) {
+    // 获取渲染后的纯文本内容
+    const textContent = messageElement.textContent || messageElement.innerText || '';
+
+    navigator.clipboard.writeText(textContent).then(() => {
+      // 显示复制成功提示
+      copySuccess.value = true;
+      setTimeout(() => {
+        copySuccess.value = false;
+      }, 2000);
+    }).catch(err => {
+      console.error('复制失败:', err);
+      showNotification('复制失败，请重试', 'error');
+    });
+  } else {
+    // 如果找不到元素，回退到原来的方法
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = message.content;
+    const textContent = tempElement.textContent || tempElement.innerText || '';
+
+    navigator.clipboard.writeText(textContent).then(() => {
+      copySuccess.value = true;
+      setTimeout(() => {
+        copySuccess.value = false;
+      }, 2000);
+    }).catch(err => {
+      console.error('复制失败:', err);
+      showNotification('复制失败，请重试', 'error');
+    });
+  }
 }
 
 // 语音播放功能 - 使用Web Speech API

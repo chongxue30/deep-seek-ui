@@ -530,21 +530,30 @@
         <div class="detail-content">
           <div class="content-title">
             <el-icon><ChatDotRound /></el-icon>
-            提问内容：
+            用户提问：
           </div>
           <div class="content-text">{{ currentQuestion.xxContent }}</div>
         </div>
+        <div class="detail-content ai-response" v-if="aiResponse">
+          <div class="content-title">
+            <el-icon><Robot /></el-icon>
+            AI 回复：
+          </div>
+          <div class="content-text" v-html="formatAIResponse(aiResponse.xxContent)"></div>
+        </div>
+        <div class="detail-content ai-response" v-else>
+          <div class="content-title">
+            <el-icon><Robot /></el-icon>
+            AI 回复：
+          </div>
+          <div class="content-text">暂无AI回复</div>
+        </div>
         <div class="detail-meta">
-<!--          <div class="meta-item">-->
-<!--            <span class="label">课程名称：</span>-->
-<!--            <span class="value">{{ getCourseName(currentQuestion.collegeId) }}</span>-->
-<!--          </div>-->
           <div class="meta-item">
             <span class="label">会话ID：</span>
             <span class="value">{{ currentQuestion.ltId || '未知' }}</span>
           </div>
         </div>
-
         <div class="detail-actions">
           <el-button @click="showQuestionDetail = false">
             关闭
@@ -552,11 +561,14 @@
         </div>
       </div>
     </el-dialog>
+
   </div>
 </template>
 
 <script setup>
 import {ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch} from 'vue';
+// 引入 DOMPurify 用于清理 HTML，防止 XSS
+import DOMPurify from 'dompurify';
 // 引入外部样式文件
 import '@/assets/styles/dashboard.scss';
 import * as echarts from 'echarts';
@@ -797,6 +809,17 @@ onMounted(() => {
     initSparklines();
   });
 });
+
+// 格式化 AI 回复内容
+function formatAIResponse(content) {
+  if (!content) return '暂无回复内容';
+  // 使用 DOMPurify 清理 HTML，确保安全性
+  const cleanContent = DOMPurify.sanitize(content, {
+    ALLOWED_TAGS: ['details', 'summary', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'ul', 'ol', 'li', 'p', 'strong', 'em', 'br', 'span', 'div'],
+    ALLOWED_ATTR: ['style', 'class']
+  });
+  return cleanContent;
+}
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', resizeCharts);
@@ -1868,10 +1891,35 @@ function handleCurrentChange(page) {
   getQuestionList();
 }
 
-// 查看提问详情
+// 新增状态：存储AI回复内容
+const aiResponse = ref(null);
+
+/// 查看提问详情
 function viewQuestionDetail(row) {
   currentQuestion.value = row;
+  aiResponse.value = null; // 重置AI回复内容
   showQuestionDetail.value = true;
+
+  // 调用后端接口获取AI回复，传递 ltId 和 createTime
+  request({
+    url: '/system/xx/aiResponse',
+    method: 'get',
+    params: {
+      ltId: row.ltId,
+      createTime: row.createTime // 传递用户提问的 createTime
+    }
+  }).then(res => {
+    if (res.code === 200 && res.data) {
+      aiResponse.value = res.data;
+    } else {
+      aiResponse.value = null;
+      ElMessage.info('未找到对应的AI回复');
+    }
+  }).catch(err => {
+    console.error('获取AI回复失败:', err);
+    aiResponse.value = null;
+    ElMessage.error('获取AI回复失败，请稍后重试');
+  });
 }
 
 // 处理表格行点击
@@ -2193,4 +2241,203 @@ function handleRowClick(row) {
 .dashboard-grid {
   margin-top: 20px;
 }
+
+/* 提问详情样式 */
+.question-detail {
+  padding: 10px;
+}
+
+.detail-content.ai-response {
+  margin-top: 20px;
+  background-color: #e6f3ff; /* AI回复使用浅蓝色背景 */
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.detail-content.ai-response .content-title {
+  color: #4361ee; /* AI回复标题使用蓝色 */
+}
+
+.detail-content.ai-response .content-text {
+  color: #333;
+}
+
+/* 提问详情样式 */
+.question-detail {
+  padding: 10px;
+}
+
+.detail-content {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.content-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.content-text {
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* AI 回复样式 */
+.detail-content.ai-response {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #e6f3ff, #f0f8ff); /* 渐变蓝色背景 */
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #d9eaff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.detail-content.ai-response:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.detail-content.ai-response .content-title {
+  color: #4361ee; /* 标题蓝色 */
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.detail-content.ai-response .content-text {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* details 和 summary 样式 */
+.detail-content.ai-response details {
+  background-color: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  transition: background-color 0.3s ease;
+}
+
+.detail-content.ai-response details[open] {
+  background-color: #ffffff;
+}
+
+.detail-content.ai-response summary {
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-content.ai-response summary::before {
+  content: '▼';
+  font-size: 12px;
+  color: #4361ee;
+  transition: transform 0.3s ease;
+}
+
+.detail-content.ai-response details[open] summary::before {
+  transform: rotate(-180deg);
+}
+
+.detail-content.ai-response details > *:not(summary) {
+  margin-top: 10px;
+  padding: 0 15px;
+}
+
+/* 表格样式 */
+.detail-content.ai-response table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.detail-content.ai-response th,
+.detail-content.ai-response td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.detail-content.ai-response th {
+  background-color: #f0f8ff;
+  color: #4361ee;
+  font-weight: 600;
+}
+
+.detail-content.ai-response tr:last-child td {
+  border-bottom: none;
+}
+
+.detail-content.ai-response tr:hover {
+  background-color: #f5faff;
+}
+
+/* 列表样式 */
+.detail-content.ai-response ul,
+.detail-content.ai-response ol {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.detail-content.ai-response li {
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.detail-content.ai-response ul li::marker {
+  color: #4361ee;
+}
+
+.detail-content.ai-response ol li::marker {
+  color: #4361ee;
+  font-weight: bold;
+}
+
+/* 代码块样式 */
+.detail-content.ai-response pre,
+.detail-content.ai-response code {
+  background-color: #2d2d2d;
+  color: #f8f8f8;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+.detail-content.ai-response pre {
+  margin: 10px 0;
+}
+
+/* 其他元素样式 */
+.detail-content.ai-response p {
+  margin: 10px 0;
+}
+
+.detail-content.ai-response strong {
+  color: #222;
+}
+
+.detail-content.ai-response em {
+  color: #555;
+}
+
 </style>
