@@ -79,6 +79,18 @@
         </svg>
         知识库管理
       </button>
+      <button
+          class="admin-nav-item"
+          :class="{ active: activeTab === 'homework' }"
+          @click="activeTab = 'homework'"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        作业练习
+      </button>
     </div>
 
     <div class="content-container">
@@ -306,6 +318,161 @@
           </button>
         </div>
       </div>
+
+
+      <!-- 作业练习视图 -->
+      <div v-if="activeTab === 'homework'" class="admin-panel">
+        <div class="admin-panel-header">
+          <h3>作业练习管理</h3>
+          <button class="action-button primary" @click="showGenerateExamModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            生成作业/试卷
+          </button>
+        </div>
+
+        <div v-if="isLoadingExams" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>加载中...</p>
+        </div>
+
+        <div v-else-if="examList.length === 0" class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <p>暂无作业/试卷，请点击上方按钮创建</p>
+        </div>
+
+        <div v-else class="exam-list">
+          <!-- 这里将显示已生成的作业/试卷列表 -->
+          <div v-for="exam in examList" :key="exam.id" class="exam-item">
+            <div class="exam-info">
+              <div class="exam-name">{{ exam.title }}</div>
+              <div class="exam-details">
+                <span class="exam-date">创建时间: {{ exam.createTime }}</span>
+                <span class="exam-period">考试时间: {{ exam.startTime }} 至 {{ exam.endTime }}</span>
+                <span class="exam-duration">时长: {{ exam.duration }}分钟</span>
+                <span class="exam-score">总分: {{ exam.totalScore }}分</span>
+              </div>
+            </div>
+            <div class="exam-actions">
+              <button class="action-button small" @click="viewExam(exam)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                     class="lucide lucide-eye">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                查看
+              </button>
+
+              <button v-if="isTeacher" class="delete-btn" @click="confirmDeleteExam(exam)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                     class="lucide lucide-trash-2">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  <line x1="10" x2="10" y1="11" y2="17"></line>
+                  <line x1="14" x2="14" y1="11" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 生成作业/试卷弹窗 -->
+      <div v-if="showExamModal" class="modal-backdrop" @click="closeExamModal"></div>
+      <div v-if="showExamModal" class="modal-container exam-modal">
+        <div class="modal-header">
+          <h3>生成作业/试卷</h3>
+          <button class="close-button" @click="closeExamModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                 class="lucide lucide-x">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="exam-subject">课程名称</label>
+            <input
+                type="text"
+                id="exam-subject"
+                v-model="examForm.subject"
+                placeholder="请输入课程名称，如：Java基础"
+                class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="exam-requirements">题目要求</label>
+            <textarea
+                id="exam-requirements"
+                v-model="examForm.requirements"
+                placeholder="请输入对试卷内容的具体要求，如题型、难度等"
+                class="form-textarea"
+                rows="4"
+            ></textarea>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group half">
+              <label for="exam-start-time">开始时间</label>
+              <input
+                  type="datetime-local"
+                  id="exam-start-time"
+                  v-model="examForm.startTime"
+                  class="form-input"
+              />
+            </div>
+
+            <div class="form-group half">
+              <label for="exam-end-time">结束时间</label>
+              <input
+                  type="datetime-local"
+                  id="exam-end-time"
+                  v-model="examForm.endTime"
+                  class="form-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isGeneratingExam" class="generating-container">
+          <div class="loading-spinner"></div>
+          <p>正在生成作业/试卷，请稍候...</p>
+          <div class="generation-progress">
+            <div class="progress-messages">
+              <div v-for="(message, index) in generationMessages" :key="index" class="progress-message">
+                {{ message }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="action-button" @click="closeExamModal" :disabled="isGeneratingExam">取消</button>
+          <button
+              class="action-button primary"
+              @click="generateExam"
+              :disabled="isGeneratingExam || !examForm.subject || !examForm.startTime || !examForm.endTime"
+          >
+            <span v-if="isGeneratingExam">生成中...</span>
+            <span v-else>开始生成</span>
+          </button>
+        </div>
+      </div>
+
 
 
       <!-- 学生列表视图 -->
@@ -1325,6 +1492,13 @@
       </div>
     </el-dialog>
   </div>
+
+  <!-- 试卷查看器模态框 -->
+  <ExamViewerModal
+      :visible.sync="showExamViewerModal"
+      :examData="currentExamData"
+      @close="showExamViewerModal = false"
+  />
 </template>
 
 <script setup>
@@ -1340,7 +1514,10 @@ import {
 import {
   getStudentProfile
 } from '@/api/analyse/dashboard';
+import ExamViewerModal from '@/components/ExamViewerModal.vue'
 
+const showExamViewerModal = ref(false)
+const currentExamData = ref(null)
 const route = useRoute()
 
 // 获取课程ID
@@ -1419,6 +1596,260 @@ const renameType = ref('') // 'folder' 或 'file'
 const itemToRename = ref(null)
 const newName = ref('')
 const isRenaming = ref(false)
+
+// 作业/试卷相关状态
+const examList = ref([])
+const isLoadingExams = ref(false)
+const showExamModal = ref(false)
+const isGeneratingExam = ref(false)
+const generationMessages = ref([])
+const examForm = ref({
+  subject: '',
+  requirements: '',
+  startTime: '',
+  endTime: ''
+})
+
+// 初始化日期时间
+const initExamDates = () => {
+  const now = new Date()
+  const start = new Date(now.getTime() + 24 * 60 * 60 * 1000) // 明天
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000) // 开始后2小时
+
+  examForm.value.startTime = formatDateTimeForInput(start)
+  examForm.value.endTime = formatDateTimeForInput(end)
+}
+
+// 格式化日期时间为input[type=datetime-local]所需格式
+const formatDateTimeForInput = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+// 格式化日期时间为后端所需格式
+const formatDateTimeForBackend = (dateTimeString) => {
+  if (!dateTimeString) return ''
+  return dateTimeString.replace('T', ' ') + ':00'
+}
+
+// 显示生成作业/试卷弹窗
+const showGenerateExamModal = () => {
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error')
+    return
+  }
+
+  initExamDates()
+  showExamModal.value = true
+}
+
+// 关闭生成作业/试卷弹窗
+const closeExamModal = () => {
+  if (isGeneratingExam.value) {
+    // 如果正在生成，询问是否确认取消
+    if (confirm('生成过程中关闭将取消生成，确定要关闭吗？')) {
+      if (eventSource) {
+        eventSource.close()
+      }
+      isGeneratingExam.value = false
+    } else {
+      return
+    }
+  }
+
+  showExamModal.value = false
+  examForm.value = {
+    subject: '',
+    requirements: '',
+    startTime: '',
+    endTime: ''
+  }
+  generationMessages.value = []
+}
+
+let eventSource = null
+
+// 生成作业/试卷
+const generateExam = async () => {
+  if (!examForm.value.subject || !examForm.value.startTime || !examForm.value.endTime) {
+    showNotification('请填写必要信息', 'error')
+    return
+  }
+
+  try {
+    isGeneratingExam.value = true
+    generationMessages.value = ['正在准备生成作业/试卷...']
+
+    // 获取用户ID
+    let teacherId = null
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      teacherId = userInfo.userId || userInfo.teacherId || null
+    }
+
+    if (!teacherId) {
+      throw new Error('无法获取教师ID')
+    }
+
+    const requestData = {
+      subject: examForm.value.subject,
+      teacherId: teacherId,
+      classId: courseId,
+      startTime: formatDateTimeForBackend(examForm.value.startTime),
+      endTime: formatDateTimeForBackend(examForm.value.endTime),
+      requirements: examForm.value.requirements
+    }
+
+    const token = localStorage.getItem('token')
+    const url = `/dev-api/exam/generate`
+
+    generationMessages.value.push('开始生成试卷，请稍候...')
+
+    // 使用fetch API发送请求
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(requestData)
+    })
+
+    if (!response.ok) {
+      throw new Error(`服务器错误: ${response.status}`)
+    }
+
+    // 处理SSE流
+    const reader = response.body.getReader()
+    let decoder = new TextDecoder()
+
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (done) {
+        break
+      }
+
+      const text = decoder.decode(value)
+      const lines = text.split('\n')
+
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          try {
+            const data = JSON.parse(line.substring(5))
+            if (data.message) {
+              generationMessages.value.push(data.message)
+            }
+          } catch (e) {
+            // 如果不是JSON，则直接添加消息
+            const message = line.substring(5).trim()
+            if (message) {
+              generationMessages.value.push(message)
+            }
+          }
+        }
+      }
+    }
+
+    generationMessages.value.push('试卷生成成功！')
+    showNotification('作业/试卷生成成功', 'success')
+
+    setTimeout(() => {
+      isGeneratingExam.value = false
+      closeExamModal()
+      getExamList()
+    }, 2000)
+
+  } catch (error) {
+    console.error('生成作业/试卷失败:', error)
+    showNotification(`生成失败: ${error.message}`, 'error')
+    isGeneratingExam.value = false
+  }
+}
+
+// 获取作业/试卷列表
+const getExamList = async () => {
+  try {
+    isLoadingExams.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/system/paper/listByCourseId/${courseId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('获取作业/试卷列表失败')
+    }
+
+    const data = await res.json()
+    if (data.code === 200 && Array.isArray(data.rows)) {
+      examList.value = data.rows
+    } else {
+      examList.value = []
+    }
+  } catch (error) {
+    console.error('获取作业/试卷列表失败:', error)
+    showNotification('获取作业/试卷列表失败', 'error')
+    examList.value = []
+  } finally {
+    isLoadingExams.value = false
+  }
+}
+
+
+// 查看作业/试卷
+const viewExam = (exam) => {
+  // 这里可以实现查看作业/试卷的详情功能
+  currentExamData.value = exam
+  showExamViewerModal.value = true
+}
+
+// 确认删除作业/试卷
+const confirmDeleteExam = (exam) => {
+  if (!isTeacher.value) {
+    showNotification('您没有权限执行此操作', 'error')
+    return
+  }
+
+  if (confirm(`确定要删除"${exam.subject}"吗？`)) {
+    deleteExam(exam.id)
+  }
+}
+
+// 删除作业/试卷
+// 删除作业/试卷
+const deleteExam = async (examId) => {
+  try {
+    const token = localStorage.getItem('token')
+
+    const res = await fetch(`/dev-api/system/paper/${examId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('删除作业/试卷失败')
+    }
+
+    showNotification('删除成功', 'success')
+    await getExamList()
+  } catch (error) {
+    console.error('删除作业/试卷失败:', error)
+    showNotification('删除作业/试卷失败', 'error')
+  }
+}
+
 
 // 显示重命名弹窗
 const openRenameModal = (item, type) => {
@@ -1689,11 +2120,14 @@ const deleteFile = async (file) => {
 }
 
 // 监听activeTab变化，加载相应数据
+// 监听activeTab变化，加载相应数据
 watch(activeTab, (newVal) => {
   if (newVal === 'students') {
     getClassStudents()
   } else if (newVal === 'knowledge') {
     getFolders()
+  } else if (newVal === 'homework') {
+    getExamList()
   }
 })
 
