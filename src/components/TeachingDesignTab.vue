@@ -168,7 +168,7 @@ const loadDesignList = async () => {
   isLoading.value = true;
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`/dev-api/system/design/list?courseId=${props.courseId}`, {
+    const response = await fetch(`/dev-api/system/design/list?classId=${props.courseId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
