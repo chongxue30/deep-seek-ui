@@ -91,6 +91,18 @@
         </svg>
         作业练习
       </button>
+      <button
+          class="admin-nav-item"
+          :class="{ active: activeTab === 'teaching' }"
+          @click="activeTab = 'teaching'"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        教学设计
+      </button>
     </div>
 
     <div class="content-container">
@@ -471,6 +483,16 @@
             <span v-else>开始生成</span>
           </button>
         </div>
+      </div>
+
+      <!-- 教学设计视图 -->
+      <div v-if="activeTab === 'teaching'" class="admin-panel">
+        <TeachingDesignTab
+            :course-id="courseId"
+            :is-teacher="isTeacher"
+            :course-name="courseInfo.className"
+            :showNotification="showNotification"
+        />
       </div>
 
 
@@ -1515,6 +1537,8 @@ import {
   getStudentProfile
 } from '@/api/analyse/dashboard';
 import ExamViewerModal from '@/components/ExamViewerModal.vue'
+import TeachingDesignViewerModal from '@/components/TeachingDesignViewerModal.vue'
+import TeachingDesignTab from '@/components/TeachingDesignTab.vue'
 
 const showExamViewerModal = ref(false)
 const currentExamData = ref(null)
