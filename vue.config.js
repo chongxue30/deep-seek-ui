@@ -11,7 +11,7 @@ module.exports = {
     proxy: {
       // 配置反向代理
       '/dev-api': {
-        target: 'https://imut-ai.meet-life.top/dev-api/',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         pathRewrite: {
           '^/dev-api': ''

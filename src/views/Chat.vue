@@ -147,10 +147,6 @@
             <!-- AI message -->
 
             <div v-else class="message-bubble assistant" :data-message-id="message.id">
-              <div class="debug-info" style="font-size: 10px; color: #666; margin-bottom: 5px;">
-                内容长度: {{ message.content?.length || 0 }}
-<!--                消息ID: {{ message.id }} | 内容长度: {{ message.content?.length || 0 }}-->
-              </div>
               <!-- Thinking process -->
               <div v-if="message.thinking" class="thinking-process">
 <!--                <details>-->
@@ -2197,7 +2193,7 @@ const sendMessage = async () => {
     }
 
     // Create POST request - using original API path
-    const response = await fetch('https://imut-ai.meet-life.top/dev-api/deepSeek/sendMessage', {
+    const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2264,8 +2260,13 @@ const sendMessage = async () => {
           // 调试日志
           console.log("处理事件:", eventType);
 
-          // Parse JSON data
-          const parsedData = JSON.parse(data);
+          // 兼容JSON和纯文本
+          let parsedData;
+          try {
+            parsedData = JSON.parse(data);
+          } catch {
+            parsedData = { answer: data };
+          }
 
           // Store conversation_id if present and we don't have a current conversation
           if (parsedData.conversation_id && !currentConversation.value) {
@@ -2294,16 +2295,41 @@ const sendMessage = async () => {
             // 处理回复内容（既包含普通回复也包含ping事件中的完整回复）
             hasReceivedFirstContent = true; // 标记已经收到内容
 
-            // 这里不做替换，只追加新内容
-            messages.value[index].content += parsedData.answer;
+            // 智能追加内容，处理单词间的空格
+            const currentContent = messages.value[index].content;
+            const newContent = parsedData.answer;
+            
+            // 如果当前内容不为空，且新内容不以空格开头，当前内容也不以空格结尾，则添加空格
+            if (currentContent && 
+                !newContent.startsWith(' ') && 
+                !currentContent.endsWith(' ') &&
+                /[a-zA-Z0-9]$/.test(currentContent) &&
+                /^[a-zA-Z0-9]/.test(newContent)) {
+              messages.value[index].content += ' ' + newContent;
+            } else {
+              messages.value[index].content += newContent;
+            }
+            
             await scrollToBottom();
 
             // 调试日志
             console.log("更新后的内容长度:", messages.value[index].content.length);
 
           } else if (eventType === 'message' && parsedData.answer) {
-            // 普通消息也直接追加
-            messages.value[index].content += parsedData.answer;
+            // 普通消息也使用相同的智能追加逻辑
+            const currentContent = messages.value[index].content;
+            const newContent = parsedData.answer;
+            
+            if (currentContent && 
+                !newContent.startsWith(' ') && 
+                !currentContent.endsWith(' ') &&
+                /[a-zA-Z0-9]$/.test(currentContent) &&
+                /^[a-zA-Z0-9]/.test(newContent)) {
+              messages.value[index].content += ' ' + newContent;
+            } else {
+              messages.value[index].content += newContent;
+            }
+            
             await scrollToBottom();
 
           } else if (eventType === 'message_end') {
@@ -2315,7 +2341,7 @@ const sendMessage = async () => {
             }
           }
         } catch (e) {
-          console.error('Failed to parse data:', e, data);
+          console.error('Failed to process data:', e, data);
         }
       }
     }
@@ -2718,7 +2744,7 @@ const submitAddDocument = async () => {
         formData.append('data', processData);
 
         // 发送请求到后端API
-        const response = await fetch('https://imut-ai.meet-life.top/dev-api/document/createByFile', {
+        const response = await fetch('http://localhost:8080/document/createByFile', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -2746,7 +2772,7 @@ const submitAddDocument = async () => {
     } else {
       // 手动输入文本创建文档
       const token = localStorage.getItem('token');
-      const res = await fetch('https://imut-ai.meet-life.top/dev-api/document/create', {
+      const res = await fetch('http://localhost:8080/document/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' ,
           'Authorization': `Bearer ${token}`},
@@ -2827,7 +2853,7 @@ const confirmDelete = async () => {
     if (deleteType.value === 'kb') {
       const token = localStorage.getItem('token');
       // 删除知识库
-      const res = await fetch(`https://imut-ai.meet-life.top/dev-api/dataset/delete/${itemToDelete.value.id}`, {
+      const res = await fetch(`http://localhost:8080/dataset/delete/${itemToDelete.value.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`}
@@ -2842,7 +2868,7 @@ const confirmDelete = async () => {
     } else {
       // 删除文档
       const token = localStorage.getItem('token');
-      const res = await fetch('https://imut-ai.meet-life.top/dev-api/document/delete', {
+      const res = await fetch('http://localhost:8080/document/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`},

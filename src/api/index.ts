@@ -25,7 +25,7 @@ export const chatAPI = {
     const token = localStorage.getItem('token') || '';
 
     // 使用原生 fetch API 而不是 axios
-    return await fetch('https://imut-ai.meet-life.top/dev-api/deepSeek/sendMessage', {
+    return await fetch('http://localhost:8080/deepSeek/sendMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

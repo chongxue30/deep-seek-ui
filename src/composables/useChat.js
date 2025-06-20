@@ -250,20 +250,7 @@ export function useChat() {
         }
         messages.value.push(userMessage)
 
-        // Add AI reply placeholder
-        const aiMessageId = generateId()
-        currentMessageId.value = aiMessageId
-
-        const aiMessage = {
-            id: aiMessageId,
-            content: '',
-            role: 'assistant',
-            thinking: '',
-            created_at: new Date()
-        }
-        messages.value.push(aiMessage)
-
-        // Clear input and scroll
+        // Clear input and scroll, and set loading state
         const currentInput = inputMessage.value
         inputMessage.value = ''
         uploadedFiles.value = []
@@ -273,7 +260,7 @@ export function useChat() {
         try {
             const token = localStorage.getItem('token')
             // Create POST request
-            const response = await fetch('https://imut-ai.meet-life.top/dev-api/deepSeek/sendMessage', {
+            const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -287,78 +274,46 @@ export function useChat() {
                 })
             })
 
-            if (!response.ok) {
-                throw new Error(`Request failed: ${response.status}`)
-            }
+            if (!response.body) return
 
-            if (!response.body) {
-                throw new Error('Response body is empty')
-            }
-
-            // Process streaming response
             const reader = response.body.getReader()
             const decoder = new TextDecoder('utf-8')
             let buffer = ''
+            let aiContent = ''
 
             while (true) {
                 const { done, value } = await reader.read()
+                if (done) break
+                buffer += decoder.decode(value, { stream: true })
 
-                if (done) {
-                    break
-                }
-
-                // Decode received data chunk
-                const chunk = decoder.decode(value, { stream: true })
-                buffer += chunk
-
-                // Process complete SSE events
-                const lines = buffer.split('\n\n')
+                // 以空行分割每条SSE消息
+                const lines = buffer.split('\n')
                 buffer = lines.pop() || ''
 
                 for (const line of lines) {
-                    if (!line.trim()) continue
-
-                    // Parse event type and data
-                    const eventMatch = line.match(/event:\s*(\w+)/)
-                    const dataMatch = line.match(/data:\s*(.*)/)
-
-                    if (!dataMatch) continue
-
-                    const eventType = eventMatch ? eventMatch[1] : 'message'
-                    let data = dataMatch[1].trim()
-
-                    try {
-                        // Parse JSON data
-                        const parsedData = JSON.parse(data)
-
-                        // Update UI based on event type
-                        if (eventType === 'agent_thought' && parsedData.thought) {
-                            // Update thinking process
-                            const index = messages.value.findIndex(msg => msg.id === aiMessageId)
-                            if (index !== -1) {
-                                messages.value[index].thinking = parsedData.thought
-                                await scrollToBottom()
+                    if (line.startsWith('data:')) {
+                        const data = line.slice(5).trim()
+                        if (data && data !== '[DONE]') {
+                            // 智能追加内容，处理单词间的空格
+                            if (aiContent && 
+                                !data.startsWith(' ') && 
+                                !aiContent.endsWith(' ') &&
+                                /[a-zA-Z0-9]$/.test(aiContent) &&
+                                /^[a-zA-Z0-9]/.test(data)) {
+                                aiContent += ' ' + data
+                            } else {
+                                aiContent += data
                             }
-                        } else if (eventType === 'agent_message' && parsedData.answer) {
-                            // Update reply content
-                            const index = messages.value.findIndex(msg => msg.id === aiMessageId)
-                            if (index !== -1) {
-                                messages.value[index].content += parsedData.answer
-                                await scrollToBottom()
-                            }
-                        } else if (eventType === 'message' && parsedData.answer) {
-                            // Handle regular message
-                            const index = messages.value.findIndex(msg => msg.id === aiMessageId)
-                            if (index !== -1) {
-                                messages.value[index].content += parsedData.answer
-                                await scrollToBottom()
-                            }
+                            // 实时渲染到界面
+                            messages.value[messages.value.length - 1].content = aiContent
                         }
-                    } catch (e) {
-                        console.error('Failed to parse data:', e, data)
                     }
                 }
             }
+
+            console.log('请求已发出');
+            console.log('收到完整响应:', aiContent);
+            console.log('最终内容:', aiContent);
 
             isLoading.value = false
             currentMessageId.value = null
@@ -371,9 +326,6 @@ export function useChat() {
             console.error('Failed to send message:', error)
             isLoading.value = false
             currentMessageId.value = null
-
-            // If request failed, remove AI message
-            messages.value = messages.value.filter(msg => msg.id !== aiMessageId)
         }
     }
 

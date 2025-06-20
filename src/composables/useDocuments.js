@@ -147,7 +147,7 @@ export function useDocuments() {
                     formData.append('data', processData)
 
                     // Send request to backend API
-                    const response = await fetch('https://imut-ai.meet-life.top/dev-api/document/createByFile', {
+                    const response = await fetch('http://localhost:8080/document/createByFile', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -173,7 +173,7 @@ export function useDocuments() {
             } else {
                 // Manually create text document
                 const token = localStorage.getItem('token')
-                const res = await fetch('https://imut-ai.meet-life.top/dev-api/document/create', {
+                const res = await fetch('http://localhost:8080/document/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
