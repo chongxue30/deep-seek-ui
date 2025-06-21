@@ -1,7 +1,7 @@
 // src/composables/useChat.js
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { chatAPI } from '@/api/index'
+import { chatAPI } from '@/api'
 import { authAPI } from '@/api/auth'
 import { useNotification } from './useNotification'
 
@@ -24,6 +24,7 @@ export function useChat() {
     const isSpeaking = ref(false)
     const copySuccess = ref(false)
     const showLogoutConfirm = ref(false)
+    const isGenerating = ref(false)
 
     // Methods
     const scrollToBottom = async () => {
@@ -259,22 +260,22 @@ export function useChat() {
 
         try {
             const token = localStorage.getItem('token')
-            // Create POST request
-            const response = await fetch('http://117.72.173.11/deepSeek/sendMessage', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    query: currentInput,
-                    conversationId: currentConversation.value?.id || '',
-                    user: userInfo.value.userName,
-                    responseMode: "streaming"
-                })
-            })
+            const params = {
+                query: currentInput,
+                conversationId: currentConversation.value?.id || '',
+                user: userInfo.value.userName,
+                responseMode: "streaming"
+            }
 
-            if (!response.body) return
+            isGenerating.value = true
+            const response = await chatAPI.sendStreamMessage(params)
+
+            if (!response.ok) {
+                isGenerating.value = false
+                isLoading.value = false
+                currentMessageId.value = null
+                return
+            }
 
             const reader = response.body.getReader()
             const decoder = new TextDecoder('utf-8')
@@ -486,6 +487,7 @@ export function useChat() {
         isSpeaking,
         copySuccess,
         showLogoutConfirm,
+        isGenerating,
         createNewChat,
         handleSelectChat,
         getMessages,

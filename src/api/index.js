@@ -1,100 +1,118 @@
 import axios from 'axios'
-import service from './auth' // 导入auth.js中的service实例
 
-// 使用统一的service实例进行API调用
-const api = service
+axios.defaults.timeout = 30000;  // 全局设置 30 秒超时
+const BASE_URL = '/dev-api'  // 所有请求都通过代理指向本地服务器
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json' // 关键：明确指定 JSON
+  },
+  timeout: 30000
+})
+
+// 添加请求拦截器，动态获取token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
 
 export const chatAPI = {
-  // 发送对话消息
-  sendMessage: (data) => {
-    // 检查并删除query末尾的换行符
-    if (data.query && data.query.endsWith('\n')) {
-      data.query = data.query.slice(0, -1);
-    }
-    return api.post('/deepSeek/sendMessage', data)
+  // 获取应用基本信息
+  getInfo: () => {
+    return api.get('/info')
   },
 
-  // 获取会话列表
-  getConversations: (data) => {
-    return api.post('/deepSeek/getConversations', data)
+  // 发送对话消息
+  // 发送流式消息请求 - 直接返回原始响应对象
+  sendStreamMessage: async (params) => {
+    const token = localStorage.getItem('token') || '';
+
+    // 使用原生 fetch API 而不是 axios
+    return await fetch('/dev-api/deepSeek/sendMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(params)
+    });
+  },
+
+  // 停止响应
+  stopResponse: (taskId, user) => {
+    return api.post(`/chat-messages/${taskId}/stop`, { user })
+  },
+
+  // 消息反馈（点赞）
+  feedback: (messageId, data) => {
+    return api.post(`/messages/${messageId}/feedbacks`, data)
+  },
+
+  // 获取下一轮建议问题列表
+  getSuggestedQuestions: (messageId, user) => {
+    return api.get(`/messages/${messageId}/suggested`, { params: { user } })
   },
 
   // 获取会话历史消息
-  getMessages: (data) => {
-    return api.post('/deepSeek/getMessages', data)
+  getMessages: (params) => {
+    return api.get('/messages', { params })
   },
 
-  // 会话重命名
-  renameConversation: (data) => {
-    return api.post('/deepSeek/renameConversation', data)
+  // 获取历史对话列表
+  getConversations: (params) => {
+    return api.get('/conversations', { params })
   },
 
   // 删除会话
   deleteConversation: (data) => {
-    return api.post('/deepSeek/deleteConversation', data)
+    return api.post('/deleteConversation', {data})
   },
 
-  // 知识库相关API
-  dataset: {
-    // 获取知识库列表
-    list: (params = { page: 1, limit: 10 }) => {
-      return api.get('/dataset/list', { params })
-    },
-    
-    // 创建知识库
-    create: (data) => {
-      return api.post('/dataset/create', data)
-    },
-    
-    // 删除知识库
-    delete: (datasetId) => {
-      return api.delete(`/dataset/delete/${datasetId}`)
-    },
-
-    // 获取知识库状态
-    status: (data) => {
-      return api.post('/dataset/status', data)
-    }
+  // 会话重命名
+  renameConversation: ( params) => {
+    return api.post('/renameConversation', {params})
   },
 
-  // 文档相关API
-  document: {
-    // 通过text创建文档
-    create: (data) => {
-      return api.post('/document/create', data)
-    },
-
-    // 获取知识库中文档列表
-    list: (data, params) => {
-      return api.post('/document/list', data, { params })
-    },
-
-    // 删除知识库中文档
-    delete: (data) => {
-      return api.post('/document/delete', data)
-    },
-
-    // 通过text更新文档text或name
-    update: (data) => {
-      return api.post('/document/update', data)
-    }
+  // 上传文件
+  uploadFile: (file, user) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('user', user)
+    return api.post('/files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   },
 
-  // 文档分段相关API
-  segment: {
-    // 新建分段
-    create: (data) => {
-      return api.post('/segment/create', data)
-    },
+  // 语音转文字
+  audioToText: (file, user) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('user', user)
+    return api.post('/audio-to-text', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
 
-    // 获取分段列表
-    list: (data, params) => {
-      return api.get('/segment/list', { params, data })
-    },
-
-    // 删除分段
-    delete: (data) => {
-      return api.post('/segment/delete', data)
-    }
+  // 文字转语音
+  textToAudio: (data) => {
+    return api.post('/text-to-audio', data, {
+      responseType: 'blob',
+      headers: {
+        'Accept': 'audio/wav'
+      }
+    })
   }
 }

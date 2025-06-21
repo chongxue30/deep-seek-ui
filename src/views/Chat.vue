@@ -1187,7 +1187,7 @@ import CodeBlockRenderer from './CodeBlockRenderer.vue'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css' // 使用深色主题的代码高亮
 import ChatHistory from './ChatHistory.vue'
-import { chatAPI } from '@/api/index'
+import { chatAPI } from '@/api/index.js'
 import { authAPI } from '@/api/auth'
 const router = useRouter()
 
@@ -2193,29 +2193,16 @@ const sendMessage = async () => {
     }
 
     // Create POST request - using original API path
-    const response = await fetch('http://117.72.173.11/deepSeek/sendMessage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        query: currentInput,
-        conversationId: currentConversation.value?.id || '',
-        user: userInfo.value.userName,
-        responseMode: "streaming",
-        classId: selectedCourseId // 使用从 localStorage 获取的课程 ID
-      }),
-      signal: abortController.value.signal // 添加此行
+    const response = await chatAPI.sendStreamMessage({
+      query: currentInput,
+      conversationId: currentConversation.value?.id || '',
+      user: userInfo.value.userName,
+      responseMode: "streaming",
+      classId: selectedCourseId // 使用从 localStorage 获取的课程 ID
     });
 
-
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
-    }
-
     if (!response.body) {
-      throw new Error('Response body is empty');
+      return;
     }
 
     // Process streaming response
