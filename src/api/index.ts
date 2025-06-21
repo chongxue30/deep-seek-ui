@@ -25,7 +25,7 @@ export const chatAPI = {
     const token = localStorage.getItem('token') || '';
 
     // 使用原生 fetch API 而不是 axios
-    return await fetch('http://localhost:8080/deepSeek/sendMessage', {
+    return await fetch('http://117.72.173.11/deepSeek/sendMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

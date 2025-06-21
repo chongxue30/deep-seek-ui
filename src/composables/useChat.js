@@ -260,7 +260,7 @@ export function useChat() {
         try {
             const token = localStorage.getItem('token')
             // Create POST request
-            const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
+            const response = await fetch('http://117.72.173.11/deepSeek/sendMessage', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

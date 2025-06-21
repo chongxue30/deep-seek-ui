@@ -2193,7 +2193,7 @@ const sendMessage = async () => {
     }
 
     // Create POST request - using original API path
-    const response = await fetch('http://localhost:8080/deepSeek/sendMessage', {
+    const response = await fetch('http://117.72.173.11/deepSeek/sendMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2744,7 +2744,7 @@ const submitAddDocument = async () => {
         formData.append('data', processData);
 
         // 发送请求到后端API
-        const response = await fetch('http://localhost:8080/document/createByFile', {
+        const response = await fetch('http://117.72.173.11/document/createByFile', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -2772,7 +2772,7 @@ const submitAddDocument = async () => {
     } else {
       // 手动输入文本创建文档
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8080/document/create', {
+      const res = await fetch('http://117.72.173.11/document/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' ,
           'Authorization': `Bearer ${token}`},
@@ -2853,7 +2853,7 @@ const confirmDelete = async () => {
     if (deleteType.value === 'kb') {
       const token = localStorage.getItem('token');
       // 删除知识库
-      const res = await fetch(`http://localhost:8080/dataset/delete/${itemToDelete.value.id}`, {
+      const res = await fetch(`http://117.72.173.11/dataset/delete/${itemToDelete.value.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`}
@@ -2868,7 +2868,7 @@ const confirmDelete = async () => {
     } else {
       // 删除文档
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8080/document/delete', {
+      const res = await fetch('http://117.72.173.11/document/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`},
