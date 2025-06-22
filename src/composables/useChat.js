@@ -206,13 +206,13 @@ export function useChat() {
                 user: userInfo.value.userName
             })
 
-            if (res && Array.isArray(res.data)) {
-                conversations.value = res.data.map(conv => ({
+            if (res && res.data && Array.isArray(res.data.data)) {
+                conversations.value = res.data.data.map(conv => ({
                     id: conv.id,
                     name: conv.name || '新对话',
                     introduction: decodeUnicode(conv.introduction || ''),
                     status: conv.status,
-                    created_at: conv.created_at,
+                    created_at: conv.created_time,
                     updated_at: conv.updated_at
                 }))
             }

@@ -69,7 +69,7 @@ export const chatAPI = {
 
   // 获取历史对话列表
   getConversations: (params) => {
-    return api.get('/conversations', { params })
+    return api.post('/deepSeek/getConversations', params)
   },
 
   // 删除会话
